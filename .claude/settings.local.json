@@ -14,7 +14,10 @@
       "Bash(cd:*)",
       "Bash(curl -s \"localhost:8080/api/query?kind=PostgresCluster&groupBy=spec.postgresVersion&filterKey=spec.instances%5B0%5D.replicas&filterOp=eq&filterValue=3\")",
       "Bash(python3 -m json.tool)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(curl -s \"localhost:8080/api/query/timeseries?kind=PostgresCluster&groupBy=spec.postgresVersion&start=2026-03-17&end=2026-03-24\")",
+      "Bash(rm -f /tmp/trace.db)",
+      "Bash(__NEW_LINE_2dd67e5cb0ba66d3__ echo:*)"
     ]
   }
 }

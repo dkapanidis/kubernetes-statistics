@@ -4,7 +4,7 @@ metadata:
   name: payments-db
   namespace: production
 spec:
-  postgresVersion: 15
+  postgresVersion: 17
   instances:
     - name: instance1
       replicas: 5
