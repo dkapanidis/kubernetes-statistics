@@ -1,4 +1,4 @@
-import type { Resource, ResourceDetail, Stats } from "../types";
+import type { Resource, ResourceDetail, Stats, FilterOptions } from "../types";
 
 const BASE = "/api";
 
@@ -7,10 +7,16 @@ export async function fetchStats(): Promise<Stats> {
   return res.json();
 }
 
+export async function fetchFilterOptions(): Promise<FilterOptions> {
+  const res = await fetch(`${BASE}/filter-options`);
+  return res.json();
+}
+
 export async function fetchResources(params?: {
   cluster?: string;
   namespace?: string;
   kind?: string;
+  name?: string;
   limit?: number;
   offset?: number;
 }): Promise<Resource[]> {
@@ -18,6 +24,7 @@ export async function fetchResources(params?: {
   if (params?.cluster) query.set("cluster", params.cluster);
   if (params?.namespace) query.set("namespace", params.namespace);
   if (params?.kind) query.set("kind", params.kind);
+  if (params?.name) query.set("name", params.name);
   if (params?.limit) query.set("limit", String(params.limit));
   if (params?.offset) query.set("offset", String(params.offset));
   const res = await fetch(`${BASE}/resources?${query}`);

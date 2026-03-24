@@ -15,6 +15,7 @@ func NewServer(db *sql.DB) *Server {
 	s.mux.HandleFunc("GET /api/resources", s.listResources)
 	s.mux.HandleFunc("GET /api/resources/{id}", s.getResource)
 	s.mux.HandleFunc("GET /api/stats", s.getStats)
+	s.mux.HandleFunc("GET /api/filter-options", s.getFilterOptions)
 	return s
 }
 

@@ -31,3 +31,9 @@ export interface Stats {
   byKind: StatEntry[];
   byCluster: StatEntry[];
 }
+
+export interface FilterOptions {
+  clusters: string[];
+  namespaces: string[];
+  kinds: string[];
+}

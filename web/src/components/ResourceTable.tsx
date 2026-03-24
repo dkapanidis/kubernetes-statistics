@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { fetchResources } from "../api/client";
-import type { Resource } from "../types";
+import { fetchResources, fetchFilterOptions } from "../api/client";
+import type { Resource, FilterOptions } from "../types";
+import FilterInput from "./FilterInput";
 
 interface Props {
   onSelect: (id: number) => void;
@@ -8,45 +9,70 @@ interface Props {
 
 export default function ResourceTable({ onSelect }: Props) {
   const [resources, setResources] = useState<Resource[]>([]);
+  const [options, setOptions] = useState<FilterOptions>({
+    clusters: [],
+    namespaces: [],
+    kinds: [],
+  });
   const [filters, setFilters] = useState({
     cluster: "",
     namespace: "",
     kind: "",
+    name: "",
   });
+
+  useEffect(() => {
+    fetchFilterOptions().then(setOptions);
+  }, []);
 
   useEffect(() => {
     const params: Record<string, string> = {};
     if (filters.cluster) params.cluster = filters.cluster;
     if (filters.namespace) params.namespace = filters.namespace;
     if (filters.kind) params.kind = filters.kind;
+    if (filters.name) params.name = filters.name;
     fetchResources(params).then(setResources);
   }, [filters]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex gap-3 flex-wrap">
-        <input
-          className="border rounded px-3 py-1.5 text-sm bg-white dark:bg-gray-700 dark:border-gray-600"
-          placeholder="Filter cluster..."
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex gap-3 flex-wrap items-center">
+        <FilterInput
+          label="cluster"
           value={filters.cluster}
-          onChange={(e) =>
-            setFilters((f) => ({ ...f, cluster: e.target.value }))
-          }
+          options={options.clusters}
+          onChange={(v) => setFilters((f) => ({ ...f, cluster: v }))}
         />
-        <input
-          className="border rounded px-3 py-1.5 text-sm bg-white dark:bg-gray-700 dark:border-gray-600"
-          placeholder="Filter namespace..."
+        <FilterInput
+          label="namespace"
           value={filters.namespace}
-          onChange={(e) =>
-            setFilters((f) => ({ ...f, namespace: e.target.value }))
-          }
+          options={options.namespaces}
+          onChange={(v) => setFilters((f) => ({ ...f, namespace: v }))}
+        />
+        <FilterInput
+          label="kind"
+          value={filters.kind}
+          options={options.kinds}
+          onChange={(v) => setFilters((f) => ({ ...f, kind: v }))}
         />
         <input
-          className="border rounded px-3 py-1.5 text-sm bg-white dark:bg-gray-700 dark:border-gray-600"
-          placeholder="Filter kind..."
-          value={filters.kind}
-          onChange={(e) => setFilters((f) => ({ ...f, kind: e.target.value }))}
+          className="border rounded px-3 py-1.5 text-sm bg-white dark:bg-gray-700 dark:border-gray-600 w-44"
+          placeholder="Search name..."
+          value={filters.name}
+          onChange={(e) =>
+            setFilters((f) => ({ ...f, name: e.target.value }))
+          }
         />
+        {(filters.cluster || filters.namespace || filters.kind || filters.name) && (
+          <button
+            className="text-xs text-gray-500 hover:text-red-500 ml-auto"
+            onClick={() =>
+              setFilters({ cluster: "", namespace: "", kind: "", name: "" })
+            }
+          >
+            Clear all
+          </button>
+        )}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
@@ -92,6 +118,9 @@ export default function ResourceTable({ onSelect }: Props) {
             )}
           </tbody>
         </table>
+      </div>
+      <div className="p-3 text-xs text-gray-400 border-t border-gray-200 dark:border-gray-700">
+        {resources.length} resources shown
       </div>
     </div>
   );
