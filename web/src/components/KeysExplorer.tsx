@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchKeyValues, fetchFilterOptions } from "../api/client";
+import { fetchKeyValues, fetchFilterOptions, fetchKeys } from "../api/client";
 import type { KeyValueEntry, FilterOptions } from "../types";
 import FilterInput from "./FilterInput";
 
@@ -23,6 +23,7 @@ export default function KeysExplorer({ onSelectResource }: Props) {
     namespaces: [],
     kinds: [],
   });
+  const [allKeys, setAllKeys] = useState<string[]>([]);
   const [entries, setEntries] = useState<KeyValueEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
@@ -37,6 +38,7 @@ export default function KeysExplorer({ onSelectResource }: Props) {
 
   useEffect(() => {
     fetchFilterOptions().then(setOptions);
+    fetchKeys().then(setAllKeys);
   }, []);
 
   useEffect(() => {
@@ -67,13 +69,11 @@ export default function KeysExplorer({ onSelectResource }: Props) {
         <div className="flex gap-3 flex-wrap items-end">
           <div>
             <label className="block text-xs text-gray-500 mb-1">Key</label>
-            <input
-              className="border rounded px-3 py-1.5 text-sm font-mono bg-white dark:bg-gray-700 dark:border-gray-600 w-56"
-              placeholder="e.g. spec.postgresVersion"
+            <FilterInput
+              label="key"
               value={filters.key}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, key: e.target.value }))
-              }
+              options={allKeys}
+              onChange={(v) => setFilters((f) => ({ ...f, key: v }))}
             />
           </div>
           <div>

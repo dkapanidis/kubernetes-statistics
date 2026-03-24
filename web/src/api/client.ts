@@ -69,8 +69,9 @@ export async function fetchKeyValues(params?: {
   return res.json();
 }
 
-export async function fetchKeys(kind: string): Promise<string[]> {
-  const res = await fetch(`${BASE}/keys?kind=${encodeURIComponent(kind)}`);
+export async function fetchKeys(kind?: string): Promise<string[]> {
+  const q = kind ? `?kind=${encodeURIComponent(kind)}` : "";
+  const res = await fetch(`${BASE}/keys${q}`);
   return res.json();
 }
 

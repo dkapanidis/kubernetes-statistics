@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -20,18 +21,22 @@ type timeseriesPoint struct {
 // Returns distinct keys for a given kind.
 func (s *Server) getKeys(w http.ResponseWriter, r *http.Request) {
 	kind := r.URL.Query().Get("kind")
-	if kind == "" {
-		http.Error(w, "kind parameter required", http.StatusBadRequest)
-		return
-	}
 
-	rows, err := s.db.Query(`
-		SELECT DISTINCT rv.key
-		FROM resource_values rv
-		JOIN resources r ON r.id = rv.resource_id
-		WHERE r.kind = ?
-		ORDER BY rv.key
-	`, kind)
+	var rows *sql.Rows
+	var err error
+	if kind != "" {
+		rows, err = s.db.Query(`
+			SELECT DISTINCT rv.key
+			FROM resource_values rv
+			JOIN resources r ON r.id = rv.resource_id
+			WHERE r.kind = ?
+			ORDER BY rv.key
+		`, kind)
+	} else {
+		rows, err = s.db.Query(`
+			SELECT DISTINCT key FROM resource_values ORDER BY key
+		`)
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
