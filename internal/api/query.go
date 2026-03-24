@@ -223,10 +223,16 @@ func applyFilter(r *http.Request, query string, args []any) (string, []any) {
 		op = "LIKE"
 	}
 
-	// Use numeric comparison if filterValue parses as number and op is numeric
+	// Determine column and bind value based on type
 	valueCol := "flt.value"
-	if _, err := strconv.ParseFloat(filterValue, 64); err == nil && op != "LIKE" {
+	var bindValue any = filterValue
+
+	if op == "LIKE" {
+		// Wrap with wildcards for LIKE
+		bindValue = "%" + filterValue + "%"
+	} else if f, err := strconv.ParseFloat(filterValue, 64); err == nil {
 		valueCol = "COALESCE(flt.value_int, flt.value_float)"
+		bindValue = f
 	}
 
 	query += ` AND r.id IN (
@@ -237,7 +243,7 @@ func applyFilter(r *http.Request, query string, args []any) (string, []any) {
 		) fl ON flt.resource_id = fl.resource_id AND flt.key = fl.key AND flt.last_seen = fl.max_ls
 		WHERE flt.key = ? AND ` + valueCol + ` ` + op + ` ?
 	)`
-	args = append(args, filterKey, filterKey, filterValue)
+	args = append(args, filterKey, filterKey, bindValue)
 
 	return query, args
 }
