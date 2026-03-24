@@ -37,6 +37,11 @@ func Walk(root string) ([]models.DiscoveredResource, error) {
 		kind := parts[2]
 		name := strings.TrimSuffix(parts[3], ".yaml")
 
+		// Never ingest Secrets — they contain sensitive data
+		if strings.EqualFold(kind, "Secret") {
+			return nil
+		}
+
 		data, err := os.ReadFile(path)
 		if err != nil {
 			return fmt.Errorf("read %s: %w", path, err)
