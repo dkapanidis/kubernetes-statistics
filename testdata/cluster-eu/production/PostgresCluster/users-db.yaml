@@ -1,0 +1,22 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  name: users-db
+  namespace: production
+spec:
+  postgresVersion: 14
+  instances:
+    - name: instance1
+      replicas: 2
+      dataVolumeClaimSpec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+status:
+  instances:
+    - name: instance1
+      readyReplicas: 2
+      replicas: 2
+  postgresVersion: 14

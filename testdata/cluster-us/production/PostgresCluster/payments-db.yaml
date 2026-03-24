@@ -1,0 +1,33 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  name: payments-db
+  namespace: production
+spec:
+  postgresVersion: 15
+  instances:
+    - name: instance1
+      replicas: 5
+      dataVolumeClaimSpec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 500Gi
+  backups:
+    pgbackrest:
+      repos:
+        - name: repo1
+          volume:
+            volumeClaimSpec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1000Gi
+status:
+  instances:
+    - name: instance1
+      readyReplicas: 5
+      replicas: 5
+  postgresVersion: 15
