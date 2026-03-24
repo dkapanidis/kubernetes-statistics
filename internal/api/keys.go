@@ -22,18 +22,34 @@ type keyEntry struct {
 
 // GET /api/key-values?key=spec.postgresVersion&value=14&kind=&cluster=&namespace=&name=&op=eq&limit=&offset=
 func (s *Server) listKeyValues(w http.ResponseWriter, r *http.Request) {
-	query := `
-		SELECT r.cluster, r.namespace, r.kind, r.name, rv.key, rv.value, rv.value_int, rv.value_float, rv.first_seen, rv.last_seen, r.id
-		FROM resource_values rv
-		JOIN resources r ON r.id = rv.resource_id
-		INNER JOIN (
-			SELECT resource_id, key, MAX(last_seen) as max_ls
-			FROM resource_values
-			GROUP BY resource_id, key
-		) latest ON rv.resource_id = latest.resource_id AND rv.key = latest.key AND rv.last_seen = latest.max_ls
-		WHERE r.deleted = 0
-	`
+	asOf := r.URL.Query().Get("asOf")
+
+	var query string
 	var args []any
+
+	if asOf != "" {
+		// Point-in-time: show values that were active at this date
+		query = `
+			SELECT r.cluster, r.namespace, r.kind, r.name, rv.key, rv.value, rv.value_int, rv.value_float, rv.first_seen, rv.last_seen, r.id
+			FROM resource_values rv
+			JOIN resources r ON r.id = rv.resource_id
+			WHERE DATE(r.first_seen) <= DATE(?) AND DATE(r.last_seen) >= DATE(?)
+			  AND DATE(rv.first_seen) <= DATE(?) AND DATE(rv.last_seen) >= DATE(?)
+		`
+		args = append(args, asOf, asOf, asOf, asOf)
+	} else {
+		query = `
+			SELECT r.cluster, r.namespace, r.kind, r.name, rv.key, rv.value, rv.value_int, rv.value_float, rv.first_seen, rv.last_seen, r.id
+			FROM resource_values rv
+			JOIN resources r ON r.id = rv.resource_id
+			INNER JOIN (
+				SELECT resource_id, key, MAX(last_seen) as max_ls
+				FROM resource_values
+				GROUP BY resource_id, key
+			) latest ON rv.resource_id = latest.resource_id AND rv.key = latest.key AND rv.last_seen = latest.max_ls
+			WHERE r.deleted = 0
+		`
+	}
 
 	if v := r.URL.Query().Get("key"); v != "" {
 		query += ` AND LOWER(rv.key) LIKE LOWER(?)`

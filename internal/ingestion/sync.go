@@ -19,6 +19,11 @@ type SyncStats struct {
 	ValuesClosed       int
 }
 
+// sqliteTime formats a time.Time as an ISO 8601 string that SQLite's DATE()/datetime() can parse.
+func sqliteTime(t time.Time) string {
+	return t.UTC().Format("2006-01-02 15:04:05")
+}
+
 func Sync(db *sql.DB, discovered []models.DiscoveredResource, runTime time.Time) (*SyncStats, error) {
 	tx, err := db.Begin()
 	if err != nil {
@@ -71,7 +76,7 @@ func upsertResource(tx *sql.Tx, res models.DiscoveredResource, runTime time.Time
 	if err == sql.ErrNoRows {
 		result, err := tx.Exec(
 			`INSERT INTO resources (cluster, namespace, kind, name, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?)`,
-			res.Cluster, res.Namespace, res.Kind, res.Name, runTime, runTime,
+			res.Cluster, res.Namespace, res.Kind, res.Name, sqliteTime(runTime), sqliteTime(runTime),
 		)
 		if err != nil {
 			return 0, false, err
@@ -83,7 +88,7 @@ func upsertResource(tx *sql.Tx, res models.DiscoveredResource, runTime time.Time
 		return 0, false, err
 	}
 
-	_, err = tx.Exec(`UPDATE resources SET last_seen = ? WHERE id = ?`, runTime, id)
+	_, err = tx.Exec(`UPDATE resources SET last_seen = ? WHERE id = ?`, sqliteTime(runTime), id)
 	return id, false, err
 }
 
@@ -126,7 +131,7 @@ func syncValues(tx *sql.Tx, resourceID int64, current map[string]models.FlatValu
 		if existing, ok := live[key]; ok {
 			if existing.value == fv.Value {
 				// Unchanged — update last_seen
-				if _, err := tx.Exec(`UPDATE resource_values SET last_seen = ? WHERE id = ?`, runTime, existing.id); err != nil {
+				if _, err := tx.Exec(`UPDATE resource_values SET last_seen = ? WHERE id = ?`, sqliteTime(runTime), existing.id); err != nil {
 					return err
 				}
 			} else {
@@ -159,7 +164,7 @@ func insertValue(tx *sql.Tx, resourceID int64, key string, fv models.FlatValue, 
 	_, err := tx.Exec(
 		`INSERT INTO resource_values (resource_id, key, value, value_int, value_float, value_time, first_seen, last_seen)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		resourceID, key, fv.Value, fv.ValueInt, fv.ValueFloat, fv.ValueTime, runTime, runTime,
+		resourceID, key, fv.Value, fv.ValueInt, fv.ValueFloat, fv.ValueTime, sqliteTime(runTime), sqliteTime(runTime),
 	)
 	return err
 }
@@ -168,7 +173,7 @@ func closeDeletedResources(tx *sql.Tx, runTime time.Time) (int, error) {
 	// Mark resources not seen in this run as deleted
 	result, err := tx.Exec(
 		`UPDATE resources SET deleted = 1 WHERE last_seen < ? AND deleted = 0`,
-		runTime,
+		sqliteTime(runTime),
 	)
 	if err != nil {
 		return 0, err
@@ -178,7 +183,7 @@ func closeDeletedResources(tx *sql.Tx, runTime time.Time) (int, error) {
 	// Un-delete resources that reappeared (last_seen was updated to runTime)
 	_, err = tx.Exec(
 		`UPDATE resources SET deleted = 0 WHERE last_seen = ? AND deleted = 1`,
-		runTime,
+		sqliteTime(runTime),
 	)
 	if err != nil {
 		return 0, err

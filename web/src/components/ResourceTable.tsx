@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchResources, fetchFilterOptions } from "../api/client";
 import type { Resource, FilterOptions } from "../types";
 import FilterInput from "./FilterInput";
+import DatePicker from "./DatePicker";
 
 interface Props {
   onSelect: (id: number) => void;
@@ -15,6 +16,8 @@ export default function ResourceTable({ onSelect }: Props) {
     kinds: [],
     names: [],
   });
+
+  const [asOf, setAsOf] = useState("");
   const [filters, setFilters] = useState({
     cluster: "",
     namespace: "",
@@ -32,8 +35,9 @@ export default function ResourceTable({ onSelect }: Props) {
     if (filters.namespace) params.namespace = filters.namespace;
     if (filters.kind) params.kind = filters.kind;
     if (filters.name) params.name = filters.name;
+    if (asOf) params.asOf = asOf;
     fetchResources(params).then(setResources);
-  }, [filters]);
+  }, [filters, asOf]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -62,6 +66,7 @@ export default function ResourceTable({ onSelect }: Props) {
           options={options.names}
           onChange={(v) => setFilters((f) => ({ ...f, name: v }))}
         />
+        <DatePicker value={asOf} onChange={setAsOf} />
         {(filters.cluster || filters.namespace || filters.kind || filters.name) && (
           <button
             className="text-xs text-gray-500 hover:text-red-500 ml-auto"

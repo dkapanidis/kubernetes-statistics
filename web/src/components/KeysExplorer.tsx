@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchKeyValues, fetchFilterOptions, fetchKeys } from "../api/client";
 import type { KeyValueEntry, FilterOptions } from "../types";
 import FilterInput from "./FilterInput";
+import DatePicker from "./DatePicker";
 
 const OPS = [
   { value: "eq", label: "=" },
@@ -24,6 +25,7 @@ export default function KeysExplorer({ onSelectResource }: Props) {
     kinds: [],
     names: [],
   });
+  const [asOf, setAsOf] = useState("");
   const [allKeys, setAllKeys] = useState<string[]>([]);
   const [entries, setEntries] = useState<KeyValueEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,10 +56,11 @@ export default function KeysExplorer({ onSelectResource }: Props) {
     if (filters.cluster) params.cluster = filters.cluster;
     if (filters.namespace) params.namespace = filters.namespace;
     if (filters.name) params.name = filters.name;
+    if (asOf) params.asOf = asOf;
     fetchKeyValues(params)
       .then(setEntries)
       .finally(() => setLoading(false));
-  }, [filters]);
+  }, [filters, asOf]);
 
   const hasFilters = Object.values(filters).some(
     (v) => v !== "" && v !== "eq",
@@ -130,6 +133,7 @@ export default function KeysExplorer({ onSelectResource }: Props) {
             options={options.names}
             onChange={(v) => setFilters((f) => ({ ...f, name: v }))}
           />
+          <DatePicker value={asOf} onChange={setAsOf} />
           {hasFilters && (
             <button
               className="text-xs text-gray-500 hover:text-red-500"

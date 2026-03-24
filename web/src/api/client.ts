@@ -25,6 +25,7 @@ export async function fetchResources(params?: {
   namespace?: string;
   kind?: string;
   name?: string;
+  asOf?: string;
   limit?: number;
   offset?: number;
 }): Promise<Resource[]> {
@@ -33,6 +34,7 @@ export async function fetchResources(params?: {
   if (params?.namespace) query.set("namespace", params.namespace);
   if (params?.kind) query.set("kind", params.kind);
   if (params?.name) query.set("name", params.name);
+  if (params?.asOf) query.set("asOf", params.asOf);
   if (params?.limit) query.set("limit", String(params.limit));
   if (params?.offset) query.set("offset", String(params.offset));
   const res = await fetch(`${BASE}/resources?${query}`);
@@ -52,6 +54,7 @@ export async function fetchKeyValues(params?: {
   cluster?: string;
   namespace?: string;
   name?: string;
+  asOf?: string;
   limit?: number;
   offset?: number;
 }): Promise<KeyValueEntry[]> {
@@ -63,6 +66,7 @@ export async function fetchKeyValues(params?: {
   if (params?.cluster) query.set("cluster", params.cluster);
   if (params?.namespace) query.set("namespace", params.namespace);
   if (params?.name) query.set("name", params.name);
+  if (params?.asOf) query.set("asOf", params.asOf);
   if (params?.limit) query.set("limit", String(params.limit));
   if (params?.offset) query.set("offset", String(params.offset));
   const res = await fetch(`${BASE}/key-values?${query}`);

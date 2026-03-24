@@ -31,8 +31,16 @@ type valueResponse struct {
 }
 
 func (s *Server) listResources(w http.ResponseWriter, r *http.Request) {
-	query := `SELECT id, cluster, namespace, kind, name, first_seen, last_seen FROM resources WHERE deleted = 0`
+	query := `SELECT id, cluster, namespace, kind, name, first_seen, last_seen FROM resources WHERE 1=1`
 	var args []any
+
+	if asOf := r.URL.Query().Get("asOf"); asOf != "" {
+		// Point-in-time: show resources that existed at this date
+		query += ` AND DATE(first_seen) <= DATE(?) AND DATE(last_seen) >= DATE(?)`
+		args = append(args, asOf, asOf)
+	} else {
+		query += ` AND deleted = 0`
+	}
 
 	if v := r.URL.Query().Get("cluster"); v != "" {
 		query += ` AND LOWER(cluster) LIKE LOWER(?)`
