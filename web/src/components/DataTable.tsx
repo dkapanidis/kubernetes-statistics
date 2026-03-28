@@ -24,6 +24,7 @@ interface Props<T> {
   rowKey: (row: T, idx: number) => string | number;
   emptyMessage?: string;
   footer?: ReactNode;
+  toolbar?: ReactNode;
 }
 
 export default function DataTable<T>({
@@ -32,6 +33,7 @@ export default function DataTable<T>({
   rowKey,
   emptyMessage = "No results",
   footer,
+  toolbar,
 }: Props<T>) {
   // Sorting
   const defaultSortCol = columns.find((c) => c.defaultSort);
@@ -302,6 +304,19 @@ export default function DataTable<T>({
         }
       }}
     >
+      {(toolbar || hasFilters) && (
+        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+          {toolbar}
+          {hasFilters && (
+            <button
+              className="text-xs text-gray-500 hover:text-red-500 ml-auto"
+              onClick={() => setFilters({})}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table ref={tableRef} className="w-full text-sm text-left select-none">
           <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-xs">

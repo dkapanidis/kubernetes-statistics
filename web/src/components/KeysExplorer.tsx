@@ -155,92 +155,95 @@ export default function KeysExplorer({ onSelectResource }: Props) {
     (v) => v !== "" && v !== "eq",
   );
 
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-      <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
-        <DatePicker value={asOf} onChange={setAsOf} />
-        {/* Value filter (server-side with operator) */}
-        <div ref={valueWrapperRef} className="relative">
-          <button
-            className="text-xs text-gray-500 hover:text-blue-500 flex items-center gap-1"
-            onClick={() => {
-              setValueFilterOpen((o) => {
-                if (!o) setTimeout(() => valueInputRef.current?.focus(), 0);
-                return !o;
-              });
-            }}
-          >
-            Value
-            {serverFilters.value && (
-              <span className="text-blue-500">
-                ({OPS.find((o) => o.value === serverFilters.op)?.label}{" "}
-                {serverFilters.value})
-              </span>
-            )}
-          </button>
-          {valueFilterOpen && (
-            <div className="absolute z-20 mt-1 left-0 min-w-[14rem] bg-white dark:bg-gray-700 border dark:border-gray-600 rounded shadow-lg p-2 space-y-2">
-              <div className="flex gap-1 items-center">
-                <select
-                  className="border rounded px-1 py-1 text-xs bg-white dark:bg-gray-700 dark:border-gray-600"
-                  value={serverFilters.op}
-                  onChange={(e) =>
-                    setServerFilters((f) => ({ ...f, op: e.target.value }))
-                  }
-                >
-                  {OPS.map((op) => (
-                    <option key={op.value} value={op.value}>
-                      {op.label}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  ref={valueInputRef}
-                  className="flex-1 border rounded px-2 py-1 text-xs font-mono bg-white dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 min-w-0"
-                  placeholder="e.g. 14"
-                  value={serverFilters.value}
-                  onChange={(e) =>
-                    setServerFilters((f) => ({ ...f, value: e.target.value }))
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape" || e.key === "Enter")
-                      setValueFilterOpen(false);
-                  }}
-                />
-              </div>
-              {serverFilters.value && (
-                <button
-                  className="text-xs text-gray-400 hover:text-red-500"
-                  onClick={() => {
-                    setServerFilters((f) => ({ ...f, value: "", op: "eq" }));
-                    setValueFilterOpen(false);
-                  }}
-                >
-                  Clear
-                </button>
-              )}
-            </div>
+  const keysToolbar = (
+    <>
+      <DatePicker value={asOf} onChange={setAsOf} />
+      {/* Value filter (server-side with operator) */}
+      <div ref={valueWrapperRef} className="relative">
+        <button
+          className="text-xs text-gray-500 hover:text-blue-500 flex items-center gap-1"
+          onClick={() => {
+            setValueFilterOpen((o) => {
+              if (!o) setTimeout(() => valueInputRef.current?.focus(), 0);
+              return !o;
+            });
+          }}
+        >
+          Value
+          {serverFilters.value && (
+            <span className="text-blue-500">
+              ({OPS.find((o) => o.value === serverFilters.op)?.label}{" "}
+              {serverFilters.value})
+            </span>
           )}
-        </div>
-        {hasServerFilters && (
-          <button
-            className="text-xs text-gray-500 hover:text-red-500 ml-auto"
-            onClick={() =>
-              setServerFilters({
-                key: "",
-                value: "",
-                op: "eq",
-                kind: "",
-                cluster: "",
-                namespace: "",
-                name: "",
-              })
-            }
-          >
-            Clear filters
-          </button>
+        </button>
+        {valueFilterOpen && (
+          <div className="absolute z-20 mt-1 left-0 min-w-[14rem] bg-white dark:bg-gray-700 border dark:border-gray-600 rounded shadow-lg p-2 space-y-2">
+            <div className="flex gap-1 items-center">
+              <select
+                className="border rounded px-1 py-1 text-xs bg-white dark:bg-gray-700 dark:border-gray-600"
+                value={serverFilters.op}
+                onChange={(e) =>
+                  setServerFilters((f) => ({ ...f, op: e.target.value }))
+                }
+              >
+                {OPS.map((op) => (
+                  <option key={op.value} value={op.value}>
+                    {op.label}
+                  </option>
+                ))}
+              </select>
+              <input
+                ref={valueInputRef}
+                className="flex-1 border rounded px-2 py-1 text-xs font-mono bg-white dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 min-w-0"
+                placeholder="e.g. 14"
+                value={serverFilters.value}
+                onChange={(e) =>
+                  setServerFilters((f) => ({ ...f, value: e.target.value }))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Escape" || e.key === "Enter")
+                    setValueFilterOpen(false);
+                }}
+              />
+            </div>
+            {serverFilters.value && (
+              <button
+                className="text-xs text-gray-400 hover:text-red-500"
+                onClick={() => {
+                  setServerFilters((f) => ({ ...f, value: "", op: "eq" }));
+                  setValueFilterOpen(false);
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
         )}
       </div>
+      {hasServerFilters && (
+        <button
+          className="text-xs text-gray-500 hover:text-red-500"
+          onClick={() =>
+            setServerFilters({
+              key: "",
+              value: "",
+              op: "eq",
+              kind: "",
+              cluster: "",
+              namespace: "",
+              name: "",
+            })
+          }
+        >
+          Clear server filters
+        </button>
+      )}
+    </>
+  );
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
       <DataTable
         columns={columns}
         data={entries}
@@ -251,6 +254,7 @@ export default function KeysExplorer({ onSelectResource }: Props) {
             : "Enter a key to start exploring"
         }
         footer={loading ? <span>(loading...)</span> : undefined}
+        toolbar={keysToolbar}
       />
     </div>
   );

@@ -85,14 +85,12 @@ export default function ResourceTable({ onSelect }: Props) {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-      <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
-        <DatePicker value={asOf} onChange={setAsOf} />
-      </div>
       <DataTable
         columns={columns}
         data={resources}
         rowKey={(r) => r.id}
         emptyMessage="No resources found"
+        toolbar={<DatePicker value={asOf} onChange={setAsOf} />}
       />
     </div>
   );
