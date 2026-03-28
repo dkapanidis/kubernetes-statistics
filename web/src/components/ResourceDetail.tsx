@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { fetchResource } from "../api/client";
 import type { ResourceDetail as ResourceDetailType } from "../types";
 
@@ -13,6 +13,18 @@ export default function ResourceDetail({ resourceId, onBack }: Props) {
   useEffect(() => {
     fetchResource(resourceId).then(setResource);
   }, [resourceId]);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onBack();
+    },
+    [onBack],
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   if (!resource) return <div className="p-8 text-gray-500">Loading...</div>;
 
