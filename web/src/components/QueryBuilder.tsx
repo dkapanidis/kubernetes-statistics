@@ -79,7 +79,7 @@ type ViewMode = "table" | "bar" | "timeseries";
 
 interface QueryBuilderProps {
   searchParams: URLSearchParams;
-  setSearchParams: React.SetStateAction<any>;
+  setSearchParams: (fn: (prev: URLSearchParams) => URLSearchParams, opts?: { replace?: boolean }) => void;
 }
 
 export default function QueryBuilder({ searchParams, setSearchParams }: QueryBuilderProps) {
@@ -90,14 +90,35 @@ export default function QueryBuilder({ searchParams, setSearchParams }: QueryBui
     names: [],
   });
   const [keys, setKeys] = useState<string[]>([]);
-  const [kind, setKind] = useState("");
-  const [groupBy, setGroupBy] = useState("");
-  const [filterKey, setFilterKey] = useState("");
-  const [filterOp, setFilterOp] = useState("eq");
-  const [filterValue, setFilterValue] = useState("");
-  const [interval, setInterval] = useState("day");
-  const [range, setRange] = useState<7 | 30>(7);
-  const [view, setView] = useState<ViewMode>("bar");
+
+  // Initialize form state from URL params
+  const [kind, setKindRaw] = useState(searchParams.get("kind") || "");
+  const [groupBy, setGroupByRaw] = useState(searchParams.get("groupBy") || "");
+  const [filterKey, setFilterKeyRaw] = useState(searchParams.get("filterKey") || "");
+  const [filterOp, setFilterOpRaw] = useState(searchParams.get("filterOp") || "eq");
+  const [filterValue, setFilterValueRaw] = useState(searchParams.get("filterValue") || "");
+  const [interval, setIntervalRaw] = useState(searchParams.get("interval") || "day");
+  const [range, setRangeRaw] = useState<7 | 30>((Number(searchParams.get("range")) === 30 ? 30 : 7));
+  const [view, setViewRaw] = useState<ViewMode>((searchParams.get("view") as ViewMode) || "bar");
+
+  // Sync form field to URL
+  const syncParam = useCallback((key: string, value: string, defaultValue = "") => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value && value !== defaultValue) next.set(key, value);
+      else next.delete(key);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setKind = useCallback((v: string) => { setKindRaw(v); syncParam("kind", v); }, [syncParam]);
+  const setGroupBy = useCallback((v: string) => { setGroupByRaw(v); syncParam("groupBy", v); }, [syncParam]);
+  const setFilterKey = useCallback((v: string) => { setFilterKeyRaw(v); syncParam("filterKey", v); }, [syncParam]);
+  const setFilterOp = useCallback((v: string) => { setFilterOpRaw(v); syncParam("filterOp", v, "eq"); }, [syncParam]);
+  const setFilterValue = useCallback((v: string) => { setFilterValueRaw(v); syncParam("filterValue", v); }, [syncParam]);
+  const setInterval = useCallback((v: string) => { setIntervalRaw(v); syncParam("interval", v, "day"); }, [syncParam]);
+  const setRange = useCallback((v: 7 | 30) => { setRangeRaw(v); syncParam("range", String(v), "7"); }, [syncParam]);
+  const setView = useCallback((v: ViewMode) => { setViewRaw(v); syncParam("view", v, "bar"); }, [syncParam]);
 
   // DSL bar state
   const [dslInput, setDslInput] = useState("");
