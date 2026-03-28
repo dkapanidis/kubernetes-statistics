@@ -1,22 +1,27 @@
-import { useState, useRef } from "react";
+import { useRef, useCallback } from "react";
 import Dashboard from "./components/Dashboard";
 import ResourceTable from "./components/ResourceTable";
 import ResourceDetail from "./components/ResourceDetail";
 import QueryBuilder from "./components/QueryBuilder";
 import KeysExplorer from "./components/KeysExplorer";
-
-type View = "dashboard" | "resources" | "detail" | "keys" | "query";
+import { useRoute } from "./hooks/useRoute";
 
 function App() {
-  const [view, setView] = useState<View>("dashboard");
-  const [selectedResource, setSelectedResource] = useState<number | null>(null);
-  const previousView = useRef<View>("resources");
+  const { route, navigate } = useRoute();
+  const previousPage = useRef("resources");
 
-  function goToDetail(id: number, from: View) {
-    previousView.current = from;
-    setSelectedResource(id);
-    setView("detail");
-  }
+  const goToDetail = useCallback(
+    (id: number, from: string) => {
+      previousPage.current = from;
+      navigate("resources/" + id);
+    },
+    [navigate],
+  );
+
+  const page = route.page;
+  const resourceMatch = page.match(/^resources\/(\d+)$/);
+  const isDetail = !!resourceMatch;
+  const selectedResource = resourceMatch ? Number(resourceMatch[1]) : null;
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -34,14 +39,11 @@ function App() {
             <button
               key={v}
               className={`text-sm ${
-                view === v || (v === "resources" && view === "detail")
+                page === v || (v === "resources" && isDetail)
                   ? "font-semibold text-blue-600"
                   : "text-gray-500 hover:text-gray-700"
               }`}
-              onClick={() => {
-                setView(v);
-                if (v === "resources") setSelectedResource(null);
-              }}
+              onClick={() => navigate(v)}
             >
               {label}
             </button>
@@ -50,23 +52,26 @@ function App() {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 pb-8">
-        {view === "dashboard" && <Dashboard />}
-        {view === "resources" && (
-          <ResourceTable onSelect={(id) => goToDetail(id, "resources")} />
-        )}
-        {view === "keys" && (
-          <KeysExplorer onSelectResource={(id) => goToDetail(id, "keys")} />
-        )}
-        {view === "detail" && selectedResource && (
-          <ResourceDetail
-            resourceId={selectedResource}
-            onBack={() => {
-              setView(previousView.current);
-              setSelectedResource(null);
-            }}
+        {page === "dashboard" && <Dashboard />}
+        {page === "resources" && (
+          <ResourceTable
+            params={route.params}
+            onSelect={(id) => goToDetail(id, "resources")}
           />
         )}
-        {view === "query" && <QueryBuilder />}
+        {page === "keys" && (
+          <KeysExplorer
+            params={route.params}
+            onSelectResource={(id) => goToDetail(id, "keys")}
+          />
+        )}
+        {isDetail && selectedResource && (
+          <ResourceDetail
+            resourceId={selectedResource}
+            onBack={() => navigate(previousPage.current)}
+          />
+        )}
+        {page === "query" && <QueryBuilder params={route.params} />}
       </main>
     </div>
   );

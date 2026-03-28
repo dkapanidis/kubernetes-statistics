@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { fetchKeyValues, fetchFilterOptions, fetchKeys } from "../api/client";
 import type { KeyValueEntry, FilterOptions } from "../types";
 import DataTable from "./DataTable";
 import type { ColumnDef } from "./DataTable";
 import DatePicker from "./DatePicker";
+import { filtersToParams, paramsToFilters } from "../hooks/useRoute";
 
 const OPS = [
   { value: "eq", label: "=" },
@@ -16,10 +17,11 @@ const OPS = [
 ];
 
 interface Props {
+  params: Record<string, string>;
   onSelectResource: (id: number) => void;
 }
 
-export default function KeysExplorer({ onSelectResource }: Props) {
+export default function KeysExplorer({ params, onSelectResource }: Props) {
   const [options, setOptions] = useState<FilterOptions>({
     clusters: [],
     namespaces: [],
@@ -235,6 +237,18 @@ export default function KeysExplorer({ onSelectResource }: Props) {
       name: "",
     });
 
+  const initialFilters = useMemo(() => paramsToFilters(params), [params]);
+
+  const onFiltersChange = useCallback((filters: Record<string, string[]>) => {
+    const current = new URLSearchParams(window.location.hash.split("?")[1] || "");
+    [...current.keys()].filter(k => k.startsWith("f.")).forEach(k => current.delete(k));
+    for (const [k, v] of Object.entries(filtersToParams(filters))) {
+      current.set(k, v);
+    }
+    const search = current.toString();
+    window.location.hash = "#/keys" + (search ? "?" + search : "");
+  }, []);
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
       <DataTable
@@ -250,6 +264,8 @@ export default function KeysExplorer({ onSelectResource }: Props) {
         toolbar={keysToolbar}
         onClearFilters={clearServerFilters}
         hasExternalFilters={hasServerFilters}
+        initialFilters={initialFilters}
+        onFiltersChange={onFiltersChange}
       />
     </div>
   );

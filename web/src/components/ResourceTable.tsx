@@ -1,15 +1,17 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { fetchResources, fetchFilterOptions } from "../api/client";
 import type { Resource, FilterOptions } from "../types";
 import DataTable from "./DataTable";
 import type { ColumnDef } from "./DataTable";
 import DatePicker from "./DatePicker";
+import { filtersToParams, paramsToFilters } from "../hooks/useRoute";
 
 interface Props {
+  params: Record<string, string>;
   onSelect: (id: number) => void;
 }
 
-export default function ResourceTable({ onSelect }: Props) {
+export default function ResourceTable({ params, onSelect }: Props) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [options, setOptions] = useState<FilterOptions>({
     clusters: [],
@@ -17,7 +19,28 @@ export default function ResourceTable({ onSelect }: Props) {
     kinds: [],
     names: [],
   });
-  const [asOf, setAsOf] = useState("");
+
+  const asOf = params.asOf || "";
+  const initialFilters = useMemo(() => paramsToFilters(params), [params]);
+
+  const setAsOf = useCallback((v: string) => {
+    const current = new URLSearchParams(window.location.hash.split("?")[1] || "");
+    if (v) current.set("asOf", v); else current.delete("asOf");
+    const search = current.toString();
+    window.location.hash = "#/resources" + (search ? "?" + search : "");
+  }, []);
+
+  const onFiltersChange = useCallback((filters: Record<string, string[]>) => {
+    const current = new URLSearchParams(window.location.hash.split("?")[1] || "");
+    // Remove old filter params
+    [...current.keys()].filter(k => k.startsWith("f.")).forEach(k => current.delete(k));
+    // Add new ones
+    for (const [k, v] of Object.entries(filtersToParams(filters))) {
+      current.set(k, v);
+    }
+    const search = current.toString();
+    window.location.hash = "#/resources" + (search ? "?" + search : "");
+  }, []);
 
   useEffect(() => {
     fetchFilterOptions().then(setOptions);
@@ -91,6 +114,8 @@ export default function ResourceTable({ onSelect }: Props) {
         rowKey={(r) => r.id}
         emptyMessage="No resources found"
         toolbar={<DatePicker value={asOf} onChange={setAsOf} />}
+        initialFilters={initialFilters}
+        onFiltersChange={onFiltersChange}
       />
     </div>
   );

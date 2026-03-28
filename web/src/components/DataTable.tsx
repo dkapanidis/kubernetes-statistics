@@ -27,6 +27,10 @@ interface Props<T> {
   toolbar?: ReactNode;
   onClearFilters?: () => void;
   hasExternalFilters?: boolean;
+  initialFilters?: Record<string, string[]>;
+  onFiltersChange?: (filters: Record<string, string[]>) => void;
+  initialSort?: { key: string; dir: SortDir };
+  onSortChange?: (key: string | null, dir: SortDir) => void;
 }
 
 export default function DataTable<T>({
@@ -38,18 +42,35 @@ export default function DataTable<T>({
   toolbar,
   onClearFilters,
   hasExternalFilters,
+  initialFilters,
+  onFiltersChange,
+  initialSort,
+  onSortChange,
 }: Props<T>) {
   // Sorting
   const defaultSortCol = columns.find((c) => c.defaultSort);
-  const [sortKey, setSortKey] = useState<string | null>(
-    defaultSortCol?.key ?? null,
+  const [sortKey, setSortKeyRaw] = useState<string | null>(
+    initialSort?.key ?? defaultSortCol?.key ?? null,
   );
-  const [sortDir, setSortDir] = useState<SortDir>(
-    defaultSortCol?.defaultSort ?? null,
+  const [sortDir, setSortDirRaw] = useState<SortDir>(
+    initialSort?.dir ?? defaultSortCol?.defaultSort ?? null,
   );
+  const setSortKey = useCallback((key: string | null) => {
+    setSortKeyRaw(key);
+  }, []);
+  const setSortDir = useCallback((dir: SortDir) => {
+    setSortDirRaw(dir);
+  }, []);
 
   // Filtering — each key maps to an array of selected values
-  const [filters, setFilters] = useState<Record<string, string[]>>({});
+  const [filters, setFiltersRaw] = useState<Record<string, string[]>>(initialFilters || {});
+  const setFilters = useCallback((f: Record<string, string[]> | ((prev: Record<string, string[]>) => Record<string, string[]>)) => {
+    setFiltersRaw((prev) => {
+      const next = typeof f === "function" ? f(prev) : f;
+      onFiltersChange?.(next);
+      return next;
+    });
+  }, [onFiltersChange]);
   const filterRefs = useRef<Record<string, FilterInputHandle | null>>({});
 
   // Selection
@@ -79,15 +100,21 @@ export default function DataTable<T>({
 
   // Sorting
   function cycleSort(key: string) {
+    let newKey: string | null;
+    let newDir: SortDir;
     if (sortKey !== key) {
-      setSortKey(key);
-      setSortDir("asc");
+      newKey = key;
+      newDir = "asc";
     } else if (sortDir === "asc") {
-      setSortDir("desc");
+      newKey = key;
+      newDir = "desc";
     } else {
-      setSortKey(null);
-      setSortDir(null);
+      newKey = null;
+      newDir = null;
     }
+    setSortKey(newKey);
+    setSortDir(newDir);
+    onSortChange?.(newKey, newDir);
   }
 
   // Filter data

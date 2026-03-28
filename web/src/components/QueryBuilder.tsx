@@ -77,7 +77,11 @@ const FILTER_OPS = [
 
 type ViewMode = "table" | "bar" | "timeseries";
 
-export default function QueryBuilder() {
+interface QueryBuilderProps {
+  params: Record<string, string>;
+}
+
+export default function QueryBuilder({ params }: QueryBuilderProps) {
   const [options, setOptions] = useState<FilterOptions>({
     clusters: [],
     namespaces: [],
