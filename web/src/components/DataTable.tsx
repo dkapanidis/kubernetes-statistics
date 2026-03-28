@@ -25,6 +25,8 @@ interface Props<T> {
   emptyMessage?: string;
   footer?: ReactNode;
   toolbar?: ReactNode;
+  onClearFilters?: () => void;
+  hasExternalFilters?: boolean;
 }
 
 export default function DataTable<T>({
@@ -34,6 +36,8 @@ export default function DataTable<T>({
   emptyMessage = "No results",
   footer,
   toolbar,
+  onClearFilters,
+  hasExternalFilters,
 }: Props<T>) {
   // Sorting
   const defaultSortCol = columns.find((c) => c.defaultSort);
@@ -307,10 +311,13 @@ export default function DataTable<T>({
       {(toolbar || hasFilters) && (
         <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
           {toolbar}
-          {hasFilters && (
+          {(hasFilters || hasExternalFilters) && (
             <button
               className="text-xs text-gray-500 hover:text-red-500 ml-auto"
-              onClick={() => setFilters({})}
+              onClick={() => {
+                setFilters({});
+                onClearFilters?.();
+              }}
             >
               Clear filters
             </button>

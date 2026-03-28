@@ -221,26 +221,19 @@ export default function KeysExplorer({ onSelectResource }: Props) {
           </div>
         )}
       </div>
-      {hasServerFilters && (
-        <button
-          className="text-xs text-gray-500 hover:text-red-500"
-          onClick={() =>
-            setServerFilters({
-              key: "",
-              value: "",
-              op: "eq",
-              kind: "",
-              cluster: "",
-              namespace: "",
-              name: "",
-            })
-          }
-        >
-          Clear server filters
-        </button>
-      )}
     </>
   );
+
+  const clearServerFilters = () =>
+    setServerFilters({
+      key: "",
+      value: "",
+      op: "eq",
+      kind: "",
+      cluster: "",
+      namespace: "",
+      name: "",
+    });
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -255,6 +248,8 @@ export default function KeysExplorer({ onSelectResource }: Props) {
         }
         footer={loading ? <span>(loading...)</span> : undefined}
         toolbar={keysToolbar}
+        onClearFilters={clearServerFilters}
+        hasExternalFilters={hasServerFilters}
       />
     </div>
   );
