@@ -3,6 +3,7 @@ import { fetchResource } from "../api/client";
 import type { ResourceDetail as ResourceDetailType, ResourceValue } from "../types";
 import DataTable from "./DataTable";
 import type { ColumnDef } from "./DataTable";
+import DateCell from "./DateCell";
 
 interface Props {
   resourceId: number;
@@ -73,13 +74,15 @@ export default function ResourceDetail({ resourceId, onBack }: Props) {
       {
         key: "firstSeen",
         label: "First Seen",
-        getValue: (v) => new Date(v.firstSeen).toLocaleString(),
+        getValue: (v) => new Date(v.firstSeen).toLocaleDateString(),
+        render: (v) => <DateCell value={v.firstSeen} />,
         className: "text-gray-500 text-xs",
       },
       {
         key: "lastSeen",
         label: "Last Seen",
-        getValue: (v) => new Date(v.lastSeen).toLocaleString(),
+        getValue: (v) => new Date(v.lastSeen).toLocaleDateString(),
+        render: (v) => <DateCell value={v.lastSeen} />,
         className: "text-gray-500 text-xs",
       },
     ],
@@ -103,8 +106,8 @@ export default function ResourceDetail({ resourceId, onBack }: Props) {
             {resource.name}
           </h2>
           <p className="text-xs text-gray-500">
-            First seen: {new Date(resource.firstSeen).toLocaleString()} | Last
-            seen: {new Date(resource.lastSeen).toLocaleString()}
+            First seen: <DateCell value={resource.firstSeen} /> | Last
+            seen: <DateCell value={resource.lastSeen} />
           </p>
         </div>
       </div>

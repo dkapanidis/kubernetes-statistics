@@ -4,6 +4,7 @@ import { fetchKeyValues, fetchFilterOptions, fetchKeys } from "../api/client";
 import type { KeyValueEntry, FilterOptions } from "../types";
 import DataTable from "./DataTable";
 import type { ColumnDef } from "./DataTable";
+import DateCell from "./DateCell";
 import DatePicker from "./DatePicker";
 import { paramsToFilters, paramsToSort, writeFilters, writeSort } from "../hooks/useTableParams";
 
@@ -149,6 +150,7 @@ export default function KeysExplorer({ searchParams, setSearchParams, onSelectRe
         key: "firstSeen",
         label: "First Seen",
         getValue: (e) => new Date(e.firstSeen).toLocaleDateString(),
+        render: (e) => <DateCell value={e.firstSeen} />,
         className: "text-xs text-gray-500",
       },
     ],

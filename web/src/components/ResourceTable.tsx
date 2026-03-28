@@ -4,6 +4,7 @@ import { fetchResources, fetchFilterOptions } from "../api/client";
 import type { Resource, FilterOptions } from "../types";
 import DataTable from "./DataTable";
 import type { ColumnDef } from "./DataTable";
+import DateCell from "./DateCell";
 import DatePicker from "./DatePicker";
 import { paramsToFilters, paramsToSort, writeFilters, writeSort } from "../hooks/useTableParams";
 
@@ -96,12 +97,14 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
         key: "firstSeen",
         label: "First Seen",
         getValue: (r) => new Date(r.firstSeen).toLocaleDateString(),
+        render: (r) => <DateCell value={r.firstSeen} />,
         className: "text-gray-500",
       },
       {
         key: "lastSeen",
         label: "Last Seen",
         getValue: (r) => new Date(r.lastSeen).toLocaleDateString(),
+        render: (r) => <DateCell value={r.lastSeen} />,
         className: "text-gray-500",
       },
     ],
