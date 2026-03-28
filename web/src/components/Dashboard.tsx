@@ -192,6 +192,10 @@ export default function Dashboard() {
         isDraggable={editing}
         isResizable={editing}
         onLayoutChange={handleLayoutChange}
+        onDragStart={() => document.body.classList.add("rgl-dragging")}
+        onDragStop={() => document.body.classList.remove("rgl-dragging")}
+        onResizeStart={() => document.body.classList.add("rgl-dragging")}
+        onResizeStop={() => document.body.classList.remove("rgl-dragging")}
         draggableHandle=".widget-drag-handle"
         compactType="vertical"
       >
@@ -282,7 +286,7 @@ function WidgetWrapper({
           </svg>
         </>
       )}
-      {!editing && <div className="h-full">{children}</div>}
+      {!editing && <div className="h-full overflow-hidden">{children}</div>}
     </div>
   );
 }
