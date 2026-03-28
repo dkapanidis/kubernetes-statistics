@@ -1,13 +1,25 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { createPortal } from "react-dom";
 
-interface Props {
+interface MultiProps {
   label: string;
   selected: string[];
   options: string[];
   onChange: (selected: string[]) => void;
   compact?: boolean;
+  value?: never;
 }
+
+interface SingleProps {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+  compact?: boolean;
+  selected?: never;
+}
+
+type Props = MultiProps | SingleProps;
 
 export interface FilterInputHandle {
   toggle: () => void;
@@ -15,7 +27,13 @@ export interface FilterInputHandle {
 }
 
 const FilterInput = forwardRef<FilterInputHandle, Props>(
-  function FilterInput({ label, selected, options, onChange, compact }, forwardedRef) {
+  function FilterInput(props, forwardedRef) {
+    const { label, options, compact } = props;
+    const singleMode = "value" in props && props.value !== undefined;
+    const selected = singleMode ? (props.value ? [props.value] : []) : (props as MultiProps).selected;
+    const onChangeMulti = singleMode
+      ? (vals: string[]) => (props as SingleProps).onChange(vals[vals.length - 1] || "")
+      : (props as MultiProps).onChange;
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [highlighted, setHighlighted] = useState(-1);
@@ -68,10 +86,13 @@ const FilterInput = forwardRef<FilterInputHandle, Props>(
     }, []);
 
     function toggleOption(option: string) {
-      if (selected.includes(option)) {
-        onChange(selected.filter((s) => s !== option));
+      if (singleMode) {
+        onChangeMulti([option]);
+        setOpen(false);
+      } else if (selected.includes(option)) {
+        onChangeMulti(selected.filter((s) => s !== option));
       } else {
-        onChange([...selected, option]);
+        onChangeMulti([...selected, option]);
       }
     }
 
@@ -163,17 +184,19 @@ const FilterInput = forwardRef<FilterInputHandle, Props>(
                   onClick={() => toggleOption(o)}
                   onMouseEnter={() => setHighlighted(i)}
                 >
-                  <span className={`w-3.5 h-3.5 border rounded flex-shrink-0 flex items-center justify-center ${
-                    isSelected
-                      ? "bg-blue-500 border-blue-500 text-white"
-                      : "border-gray-300 dark:border-gray-500"
-                  }`}>
-                    {isSelected && (
-                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </span>
+                  {!singleMode && (
+                    <span className={`w-3.5 h-3.5 border rounded flex-shrink-0 flex items-center justify-center ${
+                      isSelected
+                        ? "bg-blue-500 border-blue-500 text-white"
+                        : "border-gray-300 dark:border-gray-500"
+                    }`}>
+                      {isSelected && (
+                        <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
+                  )}
                   <span>{highlightMatch(o, search)}</span>
                 </li>
               );
@@ -204,6 +227,8 @@ const FilterInput = forwardRef<FilterInputHandle, Props>(
     }
 
     // Standard mode: visible input with dropdown
+    // In single mode, input shows selected value and typing filters + replaces
+    const inputValue = singleMode ? (open ? search : (selected[0] || "")) : search;
     return (
       <div ref={wrapperRef} className="relative">
         <div className={`border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 w-44 ${open && filtered.length > 0 ? "rounded-b-none" : ""}`}>
@@ -212,19 +237,28 @@ const FilterInput = forwardRef<FilterInputHandle, Props>(
               ref={inputRef}
               className="filter-dropdown-input w-full px-3 py-1.5 pr-7 text-sm bg-transparent text-gray-800 dark:text-gray-200"
               placeholder={`Filter ${label}...`}
-              value={search}
+              value={inputValue}
               onChange={(e) => {
                 setSearch(e.target.value);
+                if (singleMode) onChangeMulti([]);
                 setOpen(true);
               }}
-              onFocus={() => setOpen(true)}
+              onFocus={() => {
+                if (singleMode) setSearch(selected[0] || "");
+                setOpen(true);
+              }}
               onKeyDown={handleKeyDown}
             />
-            {selected.length > 0 && (
+            {(singleMode ? selected.length > 0 : search !== "") && (
               <button
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                 onClick={() => {
-                  onChange([]);
+                  if (singleMode) {
+                    onChangeMulti([]);
+                    setSearch("");
+                  } else {
+                    setSearch("");
+                  }
                   inputRef.current?.focus();
                 }}
                 tabIndex={-1}
@@ -257,17 +291,19 @@ const FilterInput = forwardRef<FilterInputHandle, Props>(
                   onClick={() => toggleOption(o)}
                   onMouseEnter={() => setHighlighted(i)}
                 >
-                  <span className={`w-3.5 h-3.5 border rounded flex-shrink-0 flex items-center justify-center ${
-                    isSelected
-                      ? "bg-blue-500 border-blue-500 text-white"
-                      : "border-gray-300 dark:border-gray-500"
-                  }`}>
-                    {isSelected && (
-                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </span>
+                  {!singleMode && (
+                    <span className={`w-3.5 h-3.5 border rounded flex-shrink-0 flex items-center justify-center ${
+                      isSelected
+                        ? "bg-blue-500 border-blue-500 text-white"
+                        : "border-gray-300 dark:border-gray-500"
+                    }`}>
+                      {isSelected && (
+                        <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
+                  )}
                   <span>{highlightMatch(o, search)}</span>
                 </li>
               );
