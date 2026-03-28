@@ -1,17 +1,19 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
+import type { SetURLSearchParams } from "react-router-dom";
 import { fetchResources, fetchFilterOptions } from "../api/client";
 import type { Resource, FilterOptions } from "../types";
 import DataTable from "./DataTable";
 import type { ColumnDef } from "./DataTable";
 import DatePicker from "./DatePicker";
-import { filtersToParams, paramsToFilters } from "../hooks/useRoute";
+import { paramsToFilters, paramsToSort, writeFilters, writeSort } from "../hooks/useTableParams";
 
 interface Props {
-  params: Record<string, string>;
+  searchParams: URLSearchParams;
+  setSearchParams: SetURLSearchParams;
   onSelect: (id: number) => void;
 }
 
-export default function ResourceTable({ params, onSelect }: Props) {
+export default function ResourceTable({ searchParams, setSearchParams, onSelect }: Props) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [options, setOptions] = useState<FilterOptions>({
     clusters: [],
@@ -20,27 +22,27 @@ export default function ResourceTable({ params, onSelect }: Props) {
     names: [],
   });
 
-  const asOf = params.asOf || "";
-  const initialFilters = useMemo(() => paramsToFilters(params), [params]);
+  const asOf = searchParams.get("asOf") || "";
+  const initialFilters = useMemo(() => paramsToFilters(searchParams), [searchParams]);
+  const initialSort = useMemo(() => paramsToSort(searchParams), [searchParams]);
 
   const setAsOf = useCallback((v: string) => {
-    const current = new URLSearchParams(window.location.hash.split("?")[1] || "");
-    if (v) current.set("asOf", v); else current.delete("asOf");
-    const search = current.toString();
-    window.location.hash = "#/resources" + (search ? "?" + search : "");
-  }, []);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (v) next.set("asOf", v); else next.delete("asOf");
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
-  const onFiltersChange = useCallback((filters: Record<string, string[]>) => {
-    const current = new URLSearchParams(window.location.hash.split("?")[1] || "");
-    // Remove old filter params
-    [...current.keys()].filter(k => k.startsWith("f.")).forEach(k => current.delete(k));
-    // Add new ones
-    for (const [k, v] of Object.entries(filtersToParams(filters))) {
-      current.set(k, v);
-    }
-    const search = current.toString();
-    window.location.hash = "#/resources" + (search ? "?" + search : "");
-  }, []);
+  const onFiltersChange = useCallback(
+    (filters: Record<string, string[]>) => writeFilters(setSearchParams, filters),
+    [setSearchParams],
+  );
+
+  const onSortChange = useCallback(
+    (key: string | null, dir: "asc" | "desc" | null) => writeSort(setSearchParams, key, dir),
+    [setSearchParams],
+  );
 
   useEffect(() => {
     fetchFilterOptions().then(setOptions);
@@ -116,6 +118,8 @@ export default function ResourceTable({ params, onSelect }: Props) {
         toolbar={<DatePicker value={asOf} onChange={setAsOf} />}
         initialFilters={initialFilters}
         onFiltersChange={onFiltersChange}
+        initialSort={initialSort}
+        onSortChange={onSortChange}
       />
     </div>
   );

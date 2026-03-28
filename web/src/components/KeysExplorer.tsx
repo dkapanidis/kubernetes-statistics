@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import type { SetURLSearchParams } from "react-router-dom";
 import { fetchKeyValues, fetchFilterOptions, fetchKeys } from "../api/client";
 import type { KeyValueEntry, FilterOptions } from "../types";
 import DataTable from "./DataTable";
 import type { ColumnDef } from "./DataTable";
 import DatePicker from "./DatePicker";
-import { filtersToParams, paramsToFilters } from "../hooks/useRoute";
+import { paramsToFilters, paramsToSort, writeFilters, writeSort } from "../hooks/useTableParams";
 
 const OPS = [
   { value: "eq", label: "=" },
@@ -17,11 +18,12 @@ const OPS = [
 ];
 
 interface Props {
-  params: Record<string, string>;
+  searchParams: URLSearchParams;
+  setSearchParams: SetURLSearchParams;
   onSelectResource: (id: number) => void;
 }
 
-export default function KeysExplorer({ params, onSelectResource }: Props) {
+export default function KeysExplorer({ searchParams, setSearchParams, onSelectResource }: Props) {
   const [options, setOptions] = useState<FilterOptions>({
     clusters: [],
     namespaces: [],
@@ -237,17 +239,18 @@ export default function KeysExplorer({ params, onSelectResource }: Props) {
       name: "",
     });
 
-  const initialFilters = useMemo(() => paramsToFilters(params), [params]);
+  const initialFilters = useMemo(() => paramsToFilters(searchParams), [searchParams]);
+  const initialSort = useMemo(() => paramsToSort(searchParams), [searchParams]);
 
-  const onFiltersChange = useCallback((filters: Record<string, string[]>) => {
-    const current = new URLSearchParams(window.location.hash.split("?")[1] || "");
-    [...current.keys()].filter(k => k.startsWith("f.")).forEach(k => current.delete(k));
-    for (const [k, v] of Object.entries(filtersToParams(filters))) {
-      current.set(k, v);
-    }
-    const search = current.toString();
-    window.location.hash = "#/keys" + (search ? "?" + search : "");
-  }, []);
+  const onFiltersChange = useCallback(
+    (filters: Record<string, string[]>) => writeFilters(setSearchParams, filters),
+    [setSearchParams],
+  );
+
+  const onSortChange = useCallback(
+    (key: string | null, dir: "asc" | "desc" | null) => writeSort(setSearchParams, key, dir),
+    [setSearchParams],
+  );
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -266,6 +269,8 @@ export default function KeysExplorer({ params, onSelectResource }: Props) {
         hasExternalFilters={hasServerFilters}
         initialFilters={initialFilters}
         onFiltersChange={onFiltersChange}
+        initialSort={initialSort}
+        onSortChange={onSortChange}
       />
     </div>
   );

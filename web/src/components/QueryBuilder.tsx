@@ -78,10 +78,11 @@ const FILTER_OPS = [
 type ViewMode = "table" | "bar" | "timeseries";
 
 interface QueryBuilderProps {
-  params: Record<string, string>;
+  searchParams: URLSearchParams;
+  setSearchParams: React.SetStateAction<any>;
 }
 
-export default function QueryBuilder({ params }: QueryBuilderProps) {
+export default function QueryBuilder({ searchParams, setSearchParams }: QueryBuilderProps) {
   const [options, setOptions] = useState<FilterOptions>({
     clusters: [],
     namespaces: [],
