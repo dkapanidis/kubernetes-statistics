@@ -46,6 +46,7 @@ export default function ResourceTable({ onSelect }: Props) {
   });
   const [sortKey, setSortKey] = useState<SortKey | null>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [copied, setCopied] = useState(false);
 
   // Cell selection state (rectangular)
   const [selection, setSelection] = useState<{
@@ -162,6 +163,8 @@ export default function ResourceTable({ onSelect }: Props) {
               .join("\t"),
           );
         navigator.clipboard.writeText(lines.join("\n"));
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
         e.preventDefault();
       }
     }
@@ -309,7 +312,16 @@ export default function ResourceTable({ onSelect }: Props) {
         <span>{resources.length} resources shown</span>
         {selection && selectionCount > 0 && (
           <span className="text-blue-500">
-            {selectionCount} cell{selectionCount > 1 ? "s" : ""} selected — Cmd+C to copy
+            {copied ? (
+              <>
+                <svg className="w-3.5 h-3.5 text-green-500 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                {" "}Copied!
+              </>
+            ) : (
+              <>{selectionCount} cell{selectionCount > 1 ? "s" : ""} selected — Cmd+C to copy</>
+            )}
           </span>
         )}
       </div>
