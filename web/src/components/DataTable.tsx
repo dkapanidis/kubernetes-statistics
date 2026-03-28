@@ -2,6 +2,10 @@ import { useState, useRef, useCallback, useMemo, useEffect, type ReactNode } fro
 import FilterInput from "./FilterInput";
 import type { FilterInputHandle } from "./FilterInput";
 
+// Module-level: tracks which DataTable instance is currently active
+let activeInstanceId: number | null = null;
+let instanceCounter = 0;
+
 type SortDir = "asc" | "desc" | null;
 
 export interface ColumnDef<T> {
@@ -57,7 +61,15 @@ export default function DataTable<T>({
   const dragging = useRef(false);
   const tableRef = useRef<HTMLTableElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const active = useRef(false);
+  const instanceId = useRef(++instanceCounter);
+
+  // Auto-activate if this is the only DataTable on the page
+  useEffect(() => {
+    const allTables = document.querySelectorAll("[data-datatable]");
+    if (allTables.length === 1) {
+      activeInstanceId = instanceId.current;
+    }
+  });
 
   // Sorting
   function cycleSort(key: string) {
@@ -135,7 +147,9 @@ export default function DataTable<T>({
         setSelection(null);
         setCursor(null);
         fullRowMode.current = true;
-        active.current = false;
+        if (activeInstanceId === instanceId.current) {
+          activeInstanceId = null;
+        }
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -148,7 +162,7 @@ export default function DataTable<T>({
     const maxCol = columns.length - 1;
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (!active.current) return;
+      if (activeInstanceId !== instanceId.current) return;
 
       // Don't capture keys when focus is inside a dialog, modal, or input element
       const target = e.target as HTMLElement;
@@ -212,6 +226,19 @@ export default function DataTable<T>({
         return;
       }
 
+      if ((e.metaKey || e.ctrlKey) && e.key === "a") {
+        e.preventDefault();
+        fullRowMode.current = true;
+        setSelection({
+          startRow: 0,
+          endRow: maxRow,
+          startCol: 0,
+          endCol: maxCol,
+        });
+        setCursor({ row: 0, col: 0 });
+        return;
+      }
+
       if (!selection) return;
 
       if (e.key === "Escape") {
@@ -269,8 +296,13 @@ export default function DataTable<T>({
   return (
     <div
       ref={wrapperRef}
-      onMouseEnter={() => { active.current = true; }}
-      onMouseLeave={() => { active.current = false; }}
+      data-datatable
+      onMouseEnter={() => { activeInstanceId = instanceId.current; }}
+      onMouseLeave={() => {
+        if (activeInstanceId === instanceId.current) {
+          activeInstanceId = null;
+        }
+      }}
     >
       <div className="overflow-x-auto">
         <table ref={tableRef} className="w-full text-sm text-left select-none">
