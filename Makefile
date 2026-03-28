@@ -1,18 +1,20 @@
-.PHONY: build-ingest build-server build test run-server run-ingest
+.PHONY: build web go run clean help
 
-build: build-ingest build-server
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-build-ingest:
-	go build -o bin/ingest ./cmd/ingest
+build: web go ## Build web frontend and Go binary
 
-build-server:
-	go build -o bin/server ./cmd/server
+web: ## Build web frontend and copy to embed directory
+	cd web && npm ci && npx vite build
+	rm -rf internal/api/dist
+	cp -r web/dist internal/api/dist
 
-test:
-	go test ./...
+go: ## Build Go binary
+	go build -o kubernetes-statistics ./cmd/kubernetes-statistics
 
-run-server:
-	go run ./cmd/server --db kubernetes-statistics.db --port 8080
+run: ## Run the server
+	./kubernetes-statistics serve
 
-run-ingest:
-	go run ./cmd/ingest --data-dir $(DATA_DIR) --db kubernetes-statistics.db
+clean: ## Remove all build artifacts
+	rm -rf kubernetes-statistics internal/api/dist web/dist web/node_modules

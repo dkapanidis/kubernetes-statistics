@@ -20,6 +20,7 @@ func NewServer(db *sql.DB) *Server {
 	s.mux.HandleFunc("GET /api/key-values", s.listKeyValues)
 	s.mux.HandleFunc("GET /api/query", s.queryGroupBy)
 	s.mux.HandleFunc("GET /api/query/timeseries", s.queryTimeseries)
+	s.mux.Handle("/", frontendHandler())
 	return s
 }
 

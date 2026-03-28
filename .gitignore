@@ -1,2 +1,5 @@
 test.db*
 kubernetes-statistics.db*
+kubernetes-statistics
+internal/api/dist/*
+!internal/api/dist/.gitkeep
