@@ -45,9 +45,9 @@ const FilterInput = forwardRef<FilterInputHandle, Props>(
       setPortalPos({ top: rect.bottom + 4, left: rect.left });
     }, [open, compact]);
 
-    const filtered = options.filter((o) =>
-      o.toLowerCase().includes(search.toLowerCase()),
-    );
+    const filtered = options
+      .filter((o) => fuzzyMatch(o, search))
+      .sort((a, b) => fuzzyScore(a, search) - fuzzyScore(b, search));
 
     useEffect(() => {
       setHighlighted(-1);
@@ -279,9 +279,68 @@ const FilterInput = forwardRef<FilterInputHandle, Props>(
 
 export default FilterInput;
 
+function fuzzyMatch(text: string, query: string): boolean {
+  if (!query) return true;
+  const t = text.toLowerCase();
+  const q = query.toLowerCase();
+  let ti = 0;
+  for (let qi = 0; qi < q.length; qi++) {
+    ti = t.indexOf(q[qi], ti);
+    if (ti === -1) return false;
+    ti++;
+  }
+  return true;
+}
+
+// Lower score = better match. Prefers consecutive and early matches.
+function fuzzyScore(text: string, query: string): number {
+  if (!query) return 0;
+  const t = text.toLowerCase();
+  const q = query.toLowerCase();
+  let ti = 0;
+  let score = 0;
+  for (let qi = 0; qi < q.length; qi++) {
+    const idx = t.indexOf(q[qi], ti);
+    if (idx === -1) return Infinity;
+    score += idx - ti; // penalize gaps
+    ti = idx + 1;
+  }
+  return score;
+}
+
+function fuzzyHighlightIndices(text: string, query: string): number[] {
+  if (!query) return [];
+  const t = text.toLowerCase();
+  const q = query.toLowerCase();
+  const indices: number[] = [];
+  let ti = 0;
+  for (let qi = 0; qi < q.length; qi++) {
+    const idx = t.indexOf(q[qi], ti);
+    if (idx === -1) return indices;
+    indices.push(idx);
+    ti = idx + 1;
+  }
+  return indices;
+}
+
 function highlightMatch(text: string, query: string) {
   if (!query) return text;
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return text;
-  return <>{text.slice(0, idx)}<span className="font-bold underline">{text.slice(idx, idx + query.length)}</span>{text.slice(idx + query.length)}</>;
+  const indices = new Set(fuzzyHighlightIndices(text, query));
+  if (indices.size === 0) return text;
+  const parts: React.ReactNode[] = [];
+  let i = 0;
+  while (i < text.length) {
+    if (indices.has(i)) {
+      let end = i;
+      while (end < text.length && indices.has(end)) end++;
+      parts.push(<span key={i} className="font-bold underline">{text.slice(i, end)}</span>);
+      i = end;
+    } else {
+      let end = i;
+      while (end < text.length && !indices.has(end)) end++;
+      parts.push(text.slice(i, end));
+      i = end;
+    }
+  }
+  return <>{parts}</>;
 }
