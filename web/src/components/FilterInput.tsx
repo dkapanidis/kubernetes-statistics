@@ -97,6 +97,8 @@ const FilterInput = forwardRef<FilterInputHandle, Props>(
           e.preventDefault();
           if (highlighted >= 0 && highlighted < filtered.length) {
             toggleOption(filtered[highlighted]);
+          } else if (filtered.length > 0) {
+            toggleOption(filtered[0]);
           }
           break;
         case "Escape":
