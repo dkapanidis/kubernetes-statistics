@@ -121,11 +121,17 @@ export default function ResourceTable({ onSelect }: Props) {
                     <CopyButton text={r.kind} />
                   </span>
                 </td>
-                <td className="px-4 py-2 text-gray-500">
-                  {new Date(r.firstSeen).toLocaleDateString()}
+                <td className="px-4 py-2 text-gray-500 group/cell">
+                  <span className="flex items-center gap-1.5">
+                    {new Date(r.firstSeen).toLocaleDateString()}
+                    <CopyButton text={new Date(r.firstSeen).toLocaleDateString()} />
+                  </span>
                 </td>
-                <td className="px-4 py-2 text-gray-500">
-                  {new Date(r.lastSeen).toLocaleDateString()}
+                <td className="px-4 py-2 text-gray-500 group/cell">
+                  <span className="flex items-center gap-1.5">
+                    {new Date(r.lastSeen).toLocaleDateString()}
+                    <CopyButton text={new Date(r.lastSeen).toLocaleDateString()} />
+                  </span>
                 </td>
               </tr>
             ))}
