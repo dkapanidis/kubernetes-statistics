@@ -49,12 +49,14 @@ export default function ResourceTable({ onSelect }: Props) {
   const [copied, setCopied] = useState(false);
 
   // Cell selection state (rectangular)
+  // anchor = where selection started (keyboard or mouse), end = current extent
   const [selection, setSelection] = useState<{
     startRow: number;
     endRow: number;
     startCol: number;
     endCol: number;
   } | null>(null);
+  const [cursor, setCursor] = useState<{ row: number; col: number } | null>(null);
   const dragging = useRef(false);
   const tableRef = useRef<HTMLTableElement>(null);
 
@@ -111,6 +113,7 @@ export default function ResourceTable({ onSelect }: Props) {
       e.preventDefault();
       dragging.current = true;
       setSelection({ startRow: row, endRow: row, startCol: col, endCol: col });
+      setCursor({ row, col });
     },
     [],
   );
@@ -136,29 +139,63 @@ export default function ResourceTable({ onSelect }: Props) {
     function handleClickOutside(e: MouseEvent) {
       if (tableRef.current && !tableRef.current.contains(e.target as Node)) {
         setSelection(null);
+        setCursor(null);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Cmd/Ctrl+C to copy selection
+  // Keyboard: arrows, shift+arrows, copy, escape
   useEffect(() => {
+    const maxRow = sortedResources.length - 1;
+    const maxCol = COLUMNS.length - 1;
+
     function handleKeyDown(e: KeyboardEvent) {
-      if (!selection) return;
-      if (e.key === "Escape") {
-        setSelection(null);
+      // Arrow keys: navigate / extend selection
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+        const cur = cursor ?? { row: 0, col: 0 };
+        const dr = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
+        const dc = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        const newRow = Math.max(0, Math.min(maxRow, cur.row + dr));
+        const newCol = Math.max(0, Math.min(maxCol, cur.col + dc));
+
+        if (e.shiftKey && selection) {
+          // Extend selection from anchor
+          setSelection((s) =>
+            s ? { ...s, endRow: newRow, endCol: newCol } : null,
+          );
+        } else {
+          // Move cursor, single-cell selection
+          setSelection({
+            startRow: newRow,
+            endRow: newRow,
+            startCol: newCol,
+            endCol: newCol,
+          });
+        }
+        setCursor({ row: newRow, col: newCol });
         return;
       }
+
+      if (!selection) return;
+
+      if (e.key === "Escape") {
+        setSelection(null);
+        setCursor(null);
+        return;
+      }
+
       if ((e.metaKey || e.ctrlKey) && e.key === "c") {
         const minRow = Math.min(selection.startRow, selection.endRow);
-        const maxRow = Math.max(selection.startRow, selection.endRow);
+        const maxR = Math.max(selection.startRow, selection.endRow);
         const minCol = Math.min(selection.startCol, selection.endCol);
-        const maxCol = Math.max(selection.startCol, selection.endCol);
+        const maxC = Math.max(selection.startCol, selection.endCol);
         const lines = sortedResources
-          .slice(minRow, maxRow + 1)
+          .slice(minRow, maxR + 1)
           .map((r) =>
-            COLUMNS.slice(minCol, maxCol + 1)
+            COLUMNS.slice(minCol, maxC + 1)
               .map((c) => getCellValue(r, c.key))
               .join("\t"),
           );
@@ -170,7 +207,7 @@ export default function ResourceTable({ onSelect }: Props) {
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selection, sortedResources]);
+  }, [selection, cursor, sortedResources]);
 
   function isCellSelected(row: number, col: number): boolean {
     if (!selection) return false;
