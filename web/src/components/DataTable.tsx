@@ -56,6 +56,8 @@ export default function DataTable<T>({
   const fullRowMode = useRef(true);
   const dragging = useRef(false);
   const tableRef = useRef<HTMLTableElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const active = useRef(false);
 
   // Sorting
   function cycleSort(key: string) {
@@ -129,10 +131,11 @@ export default function DataTable<T>({
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (tableRef.current && !tableRef.current.contains(e.target as Node)) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setSelection(null);
         setCursor(null);
         fullRowMode.current = true;
+        active.current = false;
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -145,6 +148,8 @@ export default function DataTable<T>({
     const maxCol = columns.length - 1;
 
     function handleKeyDown(e: KeyboardEvent) {
+      if (!active.current) return;
+
       // Don't capture keys when focus is inside a dialog, modal, or input element
       const target = e.target as HTMLElement;
       if (
@@ -262,7 +267,11 @@ export default function DataTable<T>({
   const hasFilters = Object.values(filters).some((v) => v !== "");
 
   return (
-    <>
+    <div
+      ref={wrapperRef}
+      onMouseEnter={() => { active.current = true; }}
+      onMouseLeave={() => { active.current = false; }}
+    >
       <div className="overflow-x-auto">
         <table ref={tableRef} className="w-full text-sm text-left select-none">
           <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-xs">
@@ -388,7 +397,7 @@ export default function DataTable<T>({
           </span>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
