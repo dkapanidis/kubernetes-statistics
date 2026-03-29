@@ -88,7 +88,7 @@ export default function WidgetEditor({ widget, onSave, onCancel }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md space-y-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg space-y-4">
         <h3 className="text-lg font-semibold">
           {widget ? "Edit Widget" : "Add Widget"}
         </h3>

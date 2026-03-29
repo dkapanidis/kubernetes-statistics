@@ -143,7 +143,11 @@ export default function DataTable<T>({
     return [...filteredData].sort((a, b) => {
       const av = col.getValue(a);
       const bv = col.getValue(b);
-      const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+      const an = Number(av);
+      const bn = Number(bv);
+      const cmp = !isNaN(an) && !isNaN(bn) && av !== "" && bv !== ""
+        ? an - bn
+        : av < bv ? -1 : av > bv ? 1 : 0;
       return sortDir === "asc" ? cmp : -cmp;
     });
   }, [filteredData, sortKey, sortDir, columns]);
