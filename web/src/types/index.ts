@@ -4,6 +4,7 @@ export interface Resource {
   namespace: string;
   kind: string;
   name: string;
+  source: string;
   firstSeen: string;
   lastSeen: string;
 }

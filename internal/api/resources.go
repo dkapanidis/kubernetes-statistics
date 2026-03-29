@@ -12,6 +12,7 @@ type resourceResponse struct {
 	Namespace string `json:"namespace"`
 	Kind      string `json:"kind"`
 	Name      string `json:"name"`
+	Source    string `json:"source"`
 	FirstSeen string `json:"firstSeen"`
 	LastSeen  string `json:"lastSeen"`
 }
@@ -31,7 +32,7 @@ type valueResponse struct {
 }
 
 func (s *Server) listResources(w http.ResponseWriter, r *http.Request) {
-	query := `SELECT id, cluster, namespace, kind, name, first_seen, last_seen FROM resources WHERE 1=1`
+	query := `SELECT id, cluster, namespace, kind, name, source, first_seen, last_seen FROM resources WHERE 1=1`
 	var args []any
 
 	if asOf := r.URL.Query().Get("asOf"); asOf != "" {
@@ -86,7 +87,7 @@ func (s *Server) listResources(w http.ResponseWriter, r *http.Request) {
 	var resources []resourceResponse
 	for rows.Next() {
 		var r resourceResponse
-		if err := rows.Scan(&r.ID, &r.Cluster, &r.Namespace, &r.Kind, &r.Name, &r.FirstSeen, &r.LastSeen); err != nil {
+		if err := rows.Scan(&r.ID, &r.Cluster, &r.Namespace, &r.Kind, &r.Name, &r.Source, &r.FirstSeen, &r.LastSeen); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -106,8 +107,8 @@ func (s *Server) getResource(w http.ResponseWriter, r *http.Request) {
 
 	var res resourceDetailResponse
 	err := s.db.QueryRow(
-		`SELECT id, cluster, namespace, kind, name, first_seen, last_seen FROM resources WHERE id = ?`, id,
-	).Scan(&res.ID, &res.Cluster, &res.Namespace, &res.Kind, &res.Name, &res.FirstSeen, &res.LastSeen)
+		`SELECT id, cluster, namespace, kind, name, source, first_seen, last_seen FROM resources WHERE id = ?`, id,
+	).Scan(&res.ID, &res.Cluster, &res.Namespace, &res.Kind, &res.Name, &res.Source, &res.FirstSeen, &res.LastSeen)
 	if err != nil {
 		http.Error(w, "resource not found", http.StatusNotFound)
 		return

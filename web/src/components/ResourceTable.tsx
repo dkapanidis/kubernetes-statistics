@@ -83,6 +83,11 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
         filterOptions: options.namespaces,
       },
       {
+        key: "source",
+        label: "Source",
+        getValue: (r) => r.source,
+      },
+      {
         key: "kind",
         label: "Kind",
         getValue: (r) => r.kind,
