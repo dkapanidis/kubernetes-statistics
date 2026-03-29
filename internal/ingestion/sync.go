@@ -131,8 +131,8 @@ func syncValues(tx *sql.Tx, resourceID int64, current map[string]models.FlatValu
 	for key, fv := range current {
 		if existing, ok := live[key]; ok {
 			if existing.value == fv.Value {
-				// Unchanged — update last_seen
-				if _, err := tx.Exec(`UPDATE resource_values SET last_seen = ? WHERE id = ?`, sqliteTime(runTime), existing.id); err != nil {
+				// Unchanged — update last_seen and line
+				if _, err := tx.Exec(`UPDATE resource_values SET last_seen = ?, line = ? WHERE id = ?`, sqliteTime(runTime), fv.Line, existing.id); err != nil {
 					return err
 				}
 			} else {
@@ -163,9 +163,9 @@ func syncValues(tx *sql.Tx, resourceID int64, current map[string]models.FlatValu
 
 func insertValue(tx *sql.Tx, resourceID int64, key string, fv models.FlatValue, runTime time.Time) error {
 	_, err := tx.Exec(
-		`INSERT INTO resource_values (resource_id, key, value, value_int, value_float, value_time, first_seen, last_seen)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		resourceID, key, fv.Value, fv.ValueInt, fv.ValueFloat, fv.ValueTime, sqliteTime(runTime), sqliteTime(runTime),
+		`INSERT INTO resource_values (resource_id, key, value, value_int, value_float, value_time, line, first_seen, last_seen)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		resourceID, key, fv.Value, fv.ValueInt, fv.ValueFloat, fv.ValueTime, fv.Line, sqliteTime(runTime), sqliteTime(runTime),
 	)
 	return err
 }

@@ -29,6 +29,7 @@ type FlatValue struct {
 	ValueInt   *int64
 	ValueFloat *float64
 	ValueTime  *time.Time
+	Line       int
 }
 
 type DiscoveredResource struct {

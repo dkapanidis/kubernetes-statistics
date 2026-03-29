@@ -14,6 +14,7 @@ export interface ResourceValue {
   value: string;
   valueInt?: number;
   valueFloat?: number;
+  line: number;
   firstSeen: string;
   lastSeen: string;
 }

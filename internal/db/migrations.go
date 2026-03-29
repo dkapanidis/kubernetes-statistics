@@ -47,5 +47,8 @@ func migrate(db *sql.DB) error {
 	// Add source column to track which data-dir a resource was ingested from
 	_, _ = db.Exec(`ALTER TABLE resources ADD COLUMN source TEXT NOT NULL DEFAULT ''`)
 
+	// Add line column to track original file line number
+	_, _ = db.Exec(`ALTER TABLE resource_values ADD COLUMN line INTEGER NOT NULL DEFAULT 0`)
+
 	return nil
 }

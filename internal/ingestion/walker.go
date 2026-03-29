@@ -100,16 +100,28 @@ func Walk(source, pattern string) ([]models.DiscoveredResource, error) {
 			return fmt.Errorf("read %s: %w", path, err)
 		}
 
+		var values map[string]models.FlatValue
 		var parsed map[string]any
 		switch ext {
 		case ".json":
 			if err := json.Unmarshal(data, &parsed); err != nil {
 				return fmt.Errorf("parse %s: %w", path, err)
 			}
+			values = Flatten(parsed)
 		default:
+			var node yaml.Node
+			if err := yaml.Unmarshal(data, &node); err != nil {
+				return fmt.Errorf("parse %s: %w", path, err)
+			}
+			values = FlattenNode(&node)
+			// Also unmarshal into map for extracting resource-level fields
 			if err := yaml.Unmarshal(data, &parsed); err != nil {
 				return fmt.Errorf("parse %s: %w", path, err)
 			}
+		}
+
+		if parsed == nil {
+			parsed = make(map[string]any)
 		}
 
 		// Extract resource-level fields from the object itself
@@ -130,8 +142,6 @@ func Walk(source, pattern string) ([]models.DiscoveredResource, error) {
 		if objNamespace != "" {
 			namespace = objNamespace
 		}
-
-		values := Flatten(parsed)
 
 		resources = append(resources, models.DiscoveredResource{
 			Source:    source,

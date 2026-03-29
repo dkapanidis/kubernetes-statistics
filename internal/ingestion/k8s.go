@@ -102,7 +102,7 @@ func FetchK8s(source, kubeconfig, kubecontext string) ([]models.DiscoveredResour
 					namespace = "_cluster_"
 				}
 
-				values := Flatten(item)
+				values := flattenWithLines(item)
 
 				resources = append(resources, models.DiscoveredResource{
 					Source:    source,

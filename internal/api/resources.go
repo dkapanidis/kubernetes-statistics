@@ -29,6 +29,7 @@ type valueResponse struct {
 	Value      string   `json:"value"`
 	ValueInt   *int64   `json:"valueInt,omitempty"`
 	ValueFloat *float64 `json:"valueFloat,omitempty"`
+	Line       int      `json:"line"`
 	FirstSeen  string   `json:"firstSeen"`
 	LastSeen   string   `json:"lastSeen"`
 }
@@ -112,7 +113,7 @@ func (s *Server) getResource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := s.db.Query(`
-		SELECT rv.key, rv.value, rv.value_int, rv.value_float, rv.first_seen, rv.last_seen
+		SELECT rv.key, rv.value, rv.value_int, rv.value_float, rv.line, rv.first_seen, rv.last_seen
 		FROM resource_values rv
 		INNER JOIN (
 			SELECT key, MAX(last_seen) as max_ls
@@ -121,7 +122,7 @@ func (s *Server) getResource(w http.ResponseWriter, r *http.Request) {
 			GROUP BY key
 		) latest ON rv.key = latest.key AND rv.last_seen = latest.max_ls
 		WHERE rv.resource_id = ?
-		ORDER BY rv.key
+		ORDER BY rv.line, rv.key
 	`, id, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -131,7 +132,7 @@ func (s *Server) getResource(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var v valueResponse
-		if err := rows.Scan(&v.Key, &v.Value, &v.ValueInt, &v.ValueFloat, &v.FirstSeen, &v.LastSeen); err != nil {
+		if err := rows.Scan(&v.Key, &v.Value, &v.ValueInt, &v.ValueFloat, &v.Line, &v.FirstSeen, &v.LastSeen); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

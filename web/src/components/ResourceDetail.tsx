@@ -32,11 +32,17 @@ export default function ResourceDetail({ resourceId, onBack }: Props) {
   const columns: ColumnDef<ResourceValue>[] = useMemo(
     () => [
       {
+        key: "line",
+        label: "#",
+        getValue: (v) => String(v.line),
+        className: "text-gray-400 text-xs text-right w-10",
+        defaultSort: "asc" as const,
+      },
+      {
         key: "key",
         label: "Key",
         getValue: (v) => v.key,
         className: "font-mono text-xs",
-        defaultSort: "asc" as const,
       },
       {
         key: "value",
