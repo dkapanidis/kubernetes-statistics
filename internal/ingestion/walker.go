@@ -40,6 +40,19 @@ func ParsePattern(pattern string) (root string, segments []string) {
 	return root, segments
 }
 
+func extractNestedString(m map[string]any, keys ...string) string {
+	var current any = m
+	for _, k := range keys {
+		obj, ok := current.(map[string]any)
+		if !ok {
+			return ""
+		}
+		current = obj[k]
+	}
+	s, _ := current.(string)
+	return s
+}
+
 func Walk(source, pattern string) ([]models.DiscoveredResource, error) {
 	root, segments := ParsePattern(pattern)
 	expectedDepth := len(segments) + 1 // segments + filename
@@ -97,6 +110,25 @@ func Walk(source, pattern string) ([]models.DiscoveredResource, error) {
 			if err := yaml.Unmarshal(data, &parsed); err != nil {
 				return fmt.Errorf("parse %s: %w", path, err)
 			}
+		}
+
+		// Extract resource-level fields from the object itself
+		objKind, _ := parsed["kind"].(string)
+		objName := extractNestedString(parsed, "metadata", "name")
+		objNamespace := extractNestedString(parsed, "metadata", "namespace")
+
+		// Object fields take priority; path fields fill gaps
+		if objKind != "" {
+			if kind != "" && kind != objKind {
+				fmt.Fprintf(os.Stderr, "WARNING: path kind %q != object kind %q for %s\n", kind, objKind, path)
+			}
+			kind = objKind
+		}
+		if objName != "" {
+			name = objName
+		}
+		if objNamespace != "" {
+			namespace = objNamespace
 		}
 
 		values := Flatten(parsed)
