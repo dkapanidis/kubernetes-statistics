@@ -10,7 +10,11 @@ function Nav() {
   return (
     <nav className="bg-white dark:bg-gray-800 shadow mb-6">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-6">
-        <h1 className="text-xl font-bold text-blue-600">Bobtail</h1>
+        <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
+          <img src="/logo-white.png" alt="Bobtail" className="h-8 w-8 dark:hidden" />
+          <img src="/logo-dark.png" alt="Bobtail" className="h-8 w-8 hidden dark:block" />
+          Bobtail
+        </h1>
         {([
           { to: "/", label: "Dashboard", end: true },
           { to: "/resources", label: "Resources", end: false },
