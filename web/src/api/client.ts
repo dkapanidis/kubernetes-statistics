@@ -25,6 +25,7 @@ export async function fetchResources(params?: {
   namespace?: string;
   kind?: string;
   name?: string;
+  source?: string;
   asOf?: string;
   limit?: number;
   offset?: number;
@@ -34,6 +35,7 @@ export async function fetchResources(params?: {
   if (params?.namespace) query.set("namespace", params.namespace);
   if (params?.kind) query.set("kind", params.kind);
   if (params?.name) query.set("name", params.name);
+  if (params?.source) query.set("source", params.source);
   if (params?.asOf) query.set("asOf", params.asOf);
   if (params?.limit) query.set("limit", String(params.limit));
   if (params?.offset) query.set("offset", String(params.offset));

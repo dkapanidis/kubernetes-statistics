@@ -2,8 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type resourceResponse struct {
@@ -43,28 +45,23 @@ func (s *Server) listResources(w http.ResponseWriter, r *http.Request) {
 		query += ` AND deleted = 0`
 	}
 
-	if v := r.URL.Query().Get("cluster"); v != "" {
-		query += ` AND LOWER(cluster) LIKE LOWER(?)`
-		args = append(args, v+"%")
-	}
-	if v := r.URL.Query().Get("namespace"); v != "" {
-		query += ` AND LOWER(namespace) LIKE LOWER(?)`
-		args = append(args, v+"%")
-	}
-	if v := r.URL.Query().Get("kind"); v != "" {
-		query += ` AND LOWER(kind) LIKE LOWER(?)`
-		args = append(args, v+"%")
-	}
-	if v := r.URL.Query().Get("name"); v != "" {
-		query += ` AND LOWER(name) LIKE LOWER(?)`
-		args = append(args, "%"+v+"%")
+	for _, col := range []string{"cluster", "namespace", "kind", "name", "source"} {
+		if v := r.URL.Query().Get(col); v != "" {
+			values := strings.Split(v, ",")
+			placeholders := make([]string, len(values))
+			for i, val := range values {
+				placeholders[i] = "?"
+				args = append(args, strings.TrimSpace(val))
+			}
+			query += fmt.Sprintf(` AND %s IN (%s)`, col, strings.Join(placeholders, ","))
+		}
 	}
 
 	query += ` ORDER BY cluster, namespace, kind, name`
 
-	limit := 100
+	limit := 1000
 	if v := r.URL.Query().Get("limit"); v != "" {
-		if l, err := strconv.Atoi(v); err == nil && l > 0 && l <= 1000 {
+		if l, err := strconv.Atoi(v); err == nil && l > 0 && l <= 10000 {
 			limit = l
 		}
 	}

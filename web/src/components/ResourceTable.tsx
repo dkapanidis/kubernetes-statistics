@@ -36,8 +36,13 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
     }, { replace: true });
   }, [setSearchParams]);
 
+  const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>(initialFilters || {});
+
   const onFiltersChange = useCallback(
-    (filters: Record<string, string[]>) => writeFilters(setSearchParams, filters),
+    (filters: Record<string, string[]>) => {
+      setActiveFilters(filters);
+      writeFilters(setSearchParams, filters);
+    },
     [setSearchParams],
   );
 
@@ -51,8 +56,15 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
   }, []);
 
   useEffect(() => {
-    fetchResources(asOf ? { asOf } : undefined).then(setResources);
-  }, [asOf]);
+    const params: Record<string, string> = {};
+    if (asOf) params.asOf = asOf;
+    for (const [key, values] of Object.entries(activeFilters)) {
+      if (values.length > 0) {
+        params[key] = values.join(",");
+      }
+    }
+    fetchResources(params).then(setResources);
+  }, [asOf, activeFilters]);
 
   const columns: ColumnDef<Resource>[] = useMemo(
     () => [
