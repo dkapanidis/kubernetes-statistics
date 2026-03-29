@@ -44,5 +44,8 @@ func migrate(db *sql.DB) error {
 	// Add deleted column if not exists (migration for existing databases)
 	_, _ = db.Exec(`ALTER TABLE resources ADD COLUMN deleted BOOLEAN NOT NULL DEFAULT 0`)
 
+	// Add source column to track which data-dir a resource was ingested from
+	_, _ = db.Exec(`ALTER TABLE resources ADD COLUMN source TEXT NOT NULL DEFAULT ''`)
+
 	return nil
 }

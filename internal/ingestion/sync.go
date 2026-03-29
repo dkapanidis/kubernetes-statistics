@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/dkapanidis/bobtail/internal/models"
@@ -24,7 +25,7 @@ func sqliteTime(t time.Time) string {
 	return t.UTC().Format("2006-01-02 15:04:05")
 }
 
-func Sync(db *sql.DB, discovered []models.DiscoveredResource, runTime time.Time) (*SyncStats, error) {
+func Sync(db *sql.DB, discovered []models.DiscoveredResource, sources []string, runTime time.Time) (*SyncStats, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, fmt.Errorf("begin transaction: %w", err)
@@ -51,8 +52,8 @@ func Sync(db *sql.DB, discovered []models.DiscoveredResource, runTime time.Time)
 		}
 	}
 
-	// Close resources not seen in this run
-	deleted, err := closeDeletedResources(tx, runTime)
+	// Close resources not seen in this run, scoped to the ingested sources only
+	deleted, err := closeDeletedResources(tx, sources, runTime)
 	if err != nil {
 		return nil, fmt.Errorf("close deleted resources: %w", err)
 	}
@@ -75,8 +76,8 @@ func upsertResource(tx *sql.Tx, res models.DiscoveredResource, runTime time.Time
 
 	if err == sql.ErrNoRows {
 		result, err := tx.Exec(
-			`INSERT INTO resources (cluster, namespace, kind, name, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?)`,
-			res.Cluster, res.Namespace, res.Kind, res.Name, sqliteTime(runTime), sqliteTime(runTime),
+			`INSERT INTO resources (cluster, namespace, kind, name, source, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			res.Cluster, res.Namespace, res.Kind, res.Name, res.Source, sqliteTime(runTime), sqliteTime(runTime),
 		)
 		if err != nil {
 			return 0, false, err
@@ -88,7 +89,7 @@ func upsertResource(tx *sql.Tx, res models.DiscoveredResource, runTime time.Time
 		return 0, false, err
 	}
 
-	_, err = tx.Exec(`UPDATE resources SET last_seen = ? WHERE id = ?`, sqliteTime(runTime), id)
+	_, err = tx.Exec(`UPDATE resources SET last_seen = ?, source = ? WHERE id = ?`, sqliteTime(runTime), res.Source, id)
 	return id, false, err
 }
 
@@ -169,11 +170,21 @@ func insertValue(tx *sql.Tx, resourceID int64, key string, fv models.FlatValue, 
 	return err
 }
 
-func closeDeletedResources(tx *sql.Tx, runTime time.Time) (int, error) {
-	// Mark resources not seen in this run as deleted
+func closeDeletedResources(tx *sql.Tx, sources []string, runTime time.Time) (int, error) {
+	// Build placeholders for source IN clause
+	placeholders := make([]string, len(sources))
+	args := make([]any, 0, len(sources)+1)
+	args = append(args, sqliteTime(runTime))
+	for i, s := range sources {
+		placeholders[i] = "?"
+		args = append(args, s)
+	}
+	inClause := strings.Join(placeholders, ", ")
+
+	// Mark resources not seen in this run as deleted, scoped to ingested sources
 	result, err := tx.Exec(
-		`UPDATE resources SET deleted = 1 WHERE last_seen < ? AND deleted = 0`,
-		sqliteTime(runTime),
+		fmt.Sprintf(`UPDATE resources SET deleted = 1 WHERE last_seen < ? AND deleted = 0 AND source IN (%s)`, inClause),
+		args...,
 	)
 	if err != nil {
 		return 0, err

@@ -32,6 +32,7 @@ type FlatValue struct {
 }
 
 type DiscoveredResource struct {
+	Source    string
 	Cluster   string
 	Namespace string
 	Kind      string

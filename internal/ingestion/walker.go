@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Walk(root string) ([]models.DiscoveredResource, error) {
+func Walk(source, root string) ([]models.DiscoveredResource, error) {
 	var resources []models.DiscoveredResource
 
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -64,6 +64,7 @@ func Walk(root string) ([]models.DiscoveredResource, error) {
 		values := Flatten(parsed)
 
 		resources = append(resources, models.DiscoveredResource{
+			Source:    source,
 			Cluster:   cluster,
 			Namespace: namespace,
 			Kind:      kind,
