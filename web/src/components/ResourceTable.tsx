@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { SetURLSearchParams } from "react-router-dom";
 import { fetchResources, fetchFilterOptions } from "../api/client";
-import type { Resource } from "../types";
+import { EMPTY_FILTER_OPTIONS, type Resource } from "../types";
 import DataTable from "./DataTable";
 import type { ColumnDef } from "./DataTable";
 import DateCell from "./DateCell";
@@ -44,7 +44,7 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
     [setSearchParams],
   );
 
-  const { data: options = { clusters: [], namespaces: [], kinds: [], names: [], sources: [] } } =
+  const { data: options = EMPTY_FILTER_OPTIONS } =
     useQuery({ queryKey: ["filterOptions"], queryFn: fetchFilterOptions });
 
   const apiParams = useMemo(() => {

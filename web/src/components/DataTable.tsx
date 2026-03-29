@@ -62,15 +62,21 @@ export default function DataTable<T>({
     setSortDirRaw(dir);
   }, []);
 
+  // Stable callback refs to avoid re-render cascades
+  const onFiltersChangeRef = useRef(onFiltersChange);
+  onFiltersChangeRef.current = onFiltersChange;
+  const onSortChangeRef = useRef(onSortChange);
+  onSortChangeRef.current = onSortChange;
+
   // Filtering — each key maps to an array of selected values
   const [filters, setFiltersRaw] = useState<Record<string, string[]>>(initialFilters || {});
   const setFilters = useCallback((f: Record<string, string[]> | ((prev: Record<string, string[]>) => Record<string, string[]>)) => {
     setFiltersRaw((prev) => {
       const next = typeof f === "function" ? f(prev) : f;
-      onFiltersChange?.(next);
+      onFiltersChangeRef.current?.(next);
       return next;
     });
-  }, [onFiltersChange]);
+  }, []);
   const filterRefs = useRef<Record<string, FilterInputHandle | null>>({});
 
   // Selection
@@ -114,7 +120,7 @@ export default function DataTable<T>({
     }
     setSortKey(newKey);
     setSortDir(newDir);
-    onSortChange?.(newKey, newDir);
+    onSortChangeRef.current?.(newKey, newDir);
   }
 
   // Filter data

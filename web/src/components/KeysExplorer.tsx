@@ -2,7 +2,7 @@ import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { SetURLSearchParams } from "react-router-dom";
 import { fetchKeyValues, fetchFilterOptions, fetchKeys } from "../api/client";
-import type { KeyValueEntry } from "../types";
+import { EMPTY_FILTER_OPTIONS, type KeyValueEntry } from "../types";
 import DataTable from "./DataTable";
 import type { ColumnDef } from "./DataTable";
 import DateCell from "./DateCell";
@@ -41,7 +41,7 @@ export default function KeysExplorer({ searchParams, setSearchParams, onSelectRe
   const valueWrapperRef = useRef<HTMLDivElement>(null);
   const valueInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: options = { clusters: [], namespaces: [], kinds: [], names: [], sources: [] } } =
+  const { data: options = EMPTY_FILTER_OPTIONS } =
     useQuery({ queryKey: ["filterOptions"], queryFn: fetchFilterOptions });
 
   const { data: allKeys = [] } = useQuery({

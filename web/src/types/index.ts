@@ -41,6 +41,14 @@ export interface FilterOptions {
   sources: string[];
 }
 
+export const EMPTY_FILTER_OPTIONS: FilterOptions = {
+  clusters: [],
+  namespaces: [],
+  kinds: [],
+  names: [],
+  sources: [],
+};
+
 export interface GroupByResult {
   value: string;
   count: number;

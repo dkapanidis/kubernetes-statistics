@@ -7,9 +7,10 @@ import {
   fetchTimeseries,
 } from "../api/client";
 import type { QueryParams } from "../api/client";
-import type {
-  GroupByResult,
-  TimeseriesPoint,
+import {
+  EMPTY_FILTER_OPTIONS,
+  type GroupByResult,
+  type TimeseriesPoint,
 } from "../types";
 import { parseQuery, serializeQuery, getSuggestions } from "../lib/queryDsl";
 import FilterInput from "./FilterInput";
@@ -83,7 +84,7 @@ interface QueryBuilderProps {
 }
 
 export default function QueryBuilder({ searchParams, setSearchParams }: QueryBuilderProps) {
-  const { data: options = { clusters: [], namespaces: [], kinds: [], names: [], sources: [] } } =
+  const { data: options = EMPTY_FILTER_OPTIONS } =
     useQuery({ queryKey: ["filterOptions"], queryFn: fetchFilterOptions });
 
   const [keys, setKeys] = useState<string[]>([]);
@@ -133,14 +134,14 @@ export default function QueryBuilder({ searchParams, setSearchParams }: QueryBui
   // Track whether the DSL bar or the form triggered the last update
   const updatingFrom = useRef<"dsl" | "form" | null>(null);
 
-  const { data: fetchedKeys = [] } = useQuery({
+  const { data: fetchedKeys } = useQuery({
     queryKey: ["keys", kind],
     queryFn: () => fetchKeys(kind),
     enabled: !!kind,
   });
 
   useEffect(() => {
-    setKeys(kind ? fetchedKeys : []);
+    setKeys(kind && fetchedKeys ? fetchedKeys : []);
   }, [fetchedKeys, kind]);
 
   // Sync form → DSL
