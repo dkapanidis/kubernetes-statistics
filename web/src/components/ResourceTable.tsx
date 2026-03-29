@@ -73,10 +73,9 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
   }, [labelSearch]);
 
   const selectedKind = activeFilters.kind?.length === 1 ? activeFilters.kind[0] : undefined;
-  const labelSearchQuery = LABEL_PREFIX + debouncedLabelSearch;
   const { data: rawLabelKeys = [] } = useQuery({
-    queryKey: ["keys", selectedKind, labelSearchQuery],
-    queryFn: () => fetchKeys(selectedKind, labelSearchQuery, 100),
+    queryKey: ["labelKeys", selectedKind, debouncedLabelSearch],
+    queryFn: () => fetchKeys(selectedKind, debouncedLabelSearch ? `metadata.labels.%${debouncedLabelSearch}` : "metadata.labels.", 100),
   });
   const labelOptions = rawLabelKeys
     .filter((k) => k.startsWith(LABEL_PREFIX))
