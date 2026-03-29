@@ -49,11 +49,18 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
   const [kvFilterOpen, setKvFilterOpen] = useState(false);
   const kvWrapperRef = useRef<HTMLDivElement>(null);
 
-  // Fetch keys for the filter key combobox
+  // Debounced key search for the filter key combobox
+  const [keySearch, setKeySearch] = useState("");
+  const [debouncedKeySearch, setDebouncedKeySearch] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedKeySearch(keySearch), 250);
+    return () => clearTimeout(timer);
+  }, [keySearch]);
+
   const selectedKind = activeFilters.kind?.length === 1 ? activeFilters.kind[0] : undefined;
-  const { data: allKeys = [] } = useQuery({
-    queryKey: ["keys", selectedKind],
-    queryFn: () => fetchKeys(selectedKind),
+  const { data: keyOptions = [] } = useQuery({
+    queryKey: ["keys", selectedKind, debouncedKeySearch],
+    queryFn: () => fetchKeys(selectedKind, debouncedKeySearch, 100),
   });
 
   useEffect(() => {
@@ -193,8 +200,9 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
                 <FilterInput
                   label="key"
                   value={filterKey}
-                  options={allKeys}
+                  options={keyOptions}
                   onChange={setFilterKey}
+                  onSearch={setKeySearch}
                 />
               </div>
             </div>

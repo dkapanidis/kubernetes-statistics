@@ -15,6 +15,7 @@ export interface ColumnDef<T> {
   render?: (row: T, rowIdx: number) => ReactNode;
   className?: string;
   filterOptions?: string[];
+  onFilterSearch?: (query: string) => void;
   defaultSort?: SortDir;
 }
 
@@ -387,6 +388,7 @@ export default function DataTable<T>({
                       onChange={(v) =>
                         setFilters((f) => ({ ...f, [col.key]: v }))
                       }
+                      onSearch={col.onFilterSearch}
                       compact
                     />
                   </ThFilter>

@@ -76,9 +76,13 @@ export async function fetchKeyValues(params?: {
   return res.json();
 }
 
-export async function fetchKeys(kind?: string): Promise<string[]> {
-  const q = kind ? `?kind=${encodeURIComponent(kind)}` : "";
-  const res = await fetch(`${BASE}/keys${q}`);
+export async function fetchKeys(kind?: string, search?: string, limit?: number): Promise<string[]> {
+  const q = new URLSearchParams();
+  if (kind) q.set("kind", kind);
+  if (search) q.set("search", search);
+  if (limit) q.set("limit", String(limit));
+  const qs = q.toString();
+  const res = await fetch(`${BASE}/keys${qs ? `?${qs}` : ""}`);
   return res.json();
 }
 

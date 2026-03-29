@@ -45,9 +45,17 @@ export default function KeysExplorer({ searchParams, setSearchParams, onSelectRe
   const { data: options = EMPTY_FILTER_OPTIONS } =
     useQuery({ queryKey: ["filterOptions"], queryFn: fetchFilterOptions });
 
+  // Debounced server-side key search for column filter
+  const [keySearch, setKeySearch] = useState("");
+  const [debouncedKeySearch, setDebouncedKeySearch] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedKeySearch(keySearch), 250);
+    return () => clearTimeout(timer);
+  }, [keySearch]);
+
   const { data: allKeys = [] } = useQuery({
-    queryKey: ["keys"],
-    queryFn: () => fetchKeys(),
+    queryKey: ["keys", debouncedKeySearch],
+    queryFn: () => fetchKeys(undefined, debouncedKeySearch, 100),
   });
 
   const kvParams = useMemo(() => {
@@ -148,6 +156,7 @@ export default function KeysExplorer({ searchParams, setSearchParams, onSelectRe
         getValue: (e) => e.key,
         className: "font-mono text-xs text-gray-500",
         filterOptions: allKeys,
+        onFilterSearch: setKeySearch,
       },
       {
         key: "value",

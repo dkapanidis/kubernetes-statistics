@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import { createPortal } from "react-dom";
 
 interface MultiProps {
@@ -6,6 +6,7 @@ interface MultiProps {
   selected: string[];
   options: string[];
   onChange: (selected: string[]) => void;
+  onSearch?: (query: string) => void;
   compact?: boolean;
   value?: never;
 }
@@ -15,6 +16,7 @@ interface SingleProps {
   value: string;
   options: string[];
   onChange: (value: string) => void;
+  onSearch?: (query: string) => void;
   compact?: boolean;
   selected?: never;
 }
@@ -28,14 +30,19 @@ export interface FilterInputHandle {
 
 const FilterInput = forwardRef<FilterInputHandle, Props>(
   function FilterInput(props, forwardedRef) {
-    const { label, options, compact } = props;
+    const { label, options, compact, onSearch } = props;
     const singleMode = "value" in props && props.value !== undefined;
     const selected = singleMode ? (props.value ? [props.value] : []) : (props as MultiProps).selected;
     const onChangeMulti = singleMode
       ? (vals: string[]) => (props as SingleProps).onChange(vals[vals.length - 1] || "")
       : (props as MultiProps).onChange;
     const [open, setOpen] = useState(false);
-    const [search, setSearch] = useState("");
+    const [searchRaw, setSearchRaw] = useState("");
+    const setSearch = useCallback((v: string) => {
+      setSearchRaw(v);
+      onSearch?.(v);
+    }, [onSearch]);
+    const search = searchRaw;
     const [highlighted, setHighlighted] = useState(-1);
     const wrapperRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -63,9 +70,11 @@ const FilterInput = forwardRef<FilterInputHandle, Props>(
       setPortalPos({ top: rect.bottom + 4, left: rect.left });
     }, [open, compact]);
 
-    const filtered = options
-      .filter((o) => fuzzyMatch(o, search))
-      .sort((a, b) => fuzzyScore(a, search) - fuzzyScore(b, search));
+    const filtered = onSearch
+      ? options
+      : options
+          .filter((o) => fuzzyMatch(o, search))
+          .sort((a, b) => fuzzyScore(a, search) - fuzzyScore(b, search));
 
     useEffect(() => {
       setHighlighted(-1);

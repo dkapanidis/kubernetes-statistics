@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -26,26 +25,40 @@ type timeseriesPoint struct {
 	Values map[string]int `json:"values"`
 }
 
-// GET /api/keys?kind=PostgresCluster
-// Returns distinct keys for a given kind.
+// GET /api/keys?kind=PostgresCluster&search=spec.&limit=100
+// Returns distinct keys for a given kind, optionally filtered by prefix search.
 func (s *Server) getKeys(w http.ResponseWriter, r *http.Request) {
 	kind := r.URL.Query().Get("kind")
+	search := r.URL.Query().Get("search")
 
-	var rows *sql.Rows
-	var err error
-	if kind != "" {
-		rows, err = s.db.Query(`
-			SELECT DISTINCT rv.key
-			FROM resource_values rv
-			JOIN resources r ON r.id = rv.resource_id
-			WHERE r.kind = ?
-			ORDER BY rv.key
-		`, kind)
-	} else {
-		rows, err = s.db.Query(`
-			SELECT DISTINCT key FROM resource_values ORDER BY key
-		`)
+	limit := 100
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if l, err := strconv.Atoi(v); err == nil && l > 0 && l <= 10000 {
+			limit = l
+		}
 	}
+
+	query := ""
+	var args []any
+
+	if kind != "" {
+		query = `SELECT DISTINCT rv.key FROM resource_values rv
+			JOIN resources r ON r.id = rv.resource_id
+			WHERE r.kind = ?`
+		args = append(args, kind)
+	} else {
+		query = `SELECT DISTINCT key AS key FROM resource_values WHERE 1=1`
+	}
+
+	if search != "" {
+		query += ` AND LOWER(key) LIKE LOWER(?)`
+		args = append(args, "%"+search+"%")
+	}
+
+	query += ` ORDER BY key LIMIT ?`
+	args = append(args, limit)
+
+	rows, err := s.db.Query(query, args...)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
