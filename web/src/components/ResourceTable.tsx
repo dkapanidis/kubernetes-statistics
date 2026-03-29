@@ -21,6 +21,7 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
     namespaces: [],
     kinds: [],
     names: [],
+    sources: [],
   });
 
   const asOf = searchParams.get("asOf") || "";
@@ -86,6 +87,7 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
         key: "source",
         label: "Source",
         getValue: (r) => r.source,
+        filterOptions: options.sources,
       },
       {
         key: "kind",

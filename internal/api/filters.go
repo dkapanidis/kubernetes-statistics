@@ -10,6 +10,7 @@ type filterOptionsResponse struct {
 	Namespaces []string `json:"namespaces"`
 	Kinds      []string `json:"kinds"`
 	Names      []string `json:"names"`
+	Sources    []string `json:"sources"`
 }
 
 func (s *Server) getFilterOptions(w http.ResponseWriter, r *http.Request) {
@@ -18,9 +19,10 @@ func (s *Server) getFilterOptions(w http.ResponseWriter, r *http.Request) {
 		Namespaces: []string{},
 		Kinds:      []string{},
 		Names:      []string{},
+		Sources:    []string{},
 	}
 
-	allowedColumns := map[string]bool{"cluster": true, "namespace": true, "kind": true, "name": true}
+	allowedColumns := map[string]bool{"cluster": true, "namespace": true, "kind": true, "name": true, "source": true}
 
 	type Column string
 	const (
@@ -28,6 +30,7 @@ func (s *Server) getFilterOptions(w http.ResponseWriter, r *http.Request) {
 		Namespace Column = "namespace"
 		Kind      Column = "kind"
 		Name      Column = "name"
+		Source    Column = "source"
 	)
 
 	queryDistinct := func(column Column) ([]string, error) {
@@ -67,6 +70,10 @@ func (s *Server) getFilterOptions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if resp.Names, err = queryDistinct(Name); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Sources, err = queryDistinct(Source); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

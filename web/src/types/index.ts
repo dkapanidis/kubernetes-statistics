@@ -38,6 +38,7 @@ export interface FilterOptions {
   namespaces: string[];
   kinds: string[];
   names: string[];
+  sources: string[];
 }
 
 export interface GroupByResult {
