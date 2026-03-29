@@ -565,8 +565,8 @@ export default function QueryBuilder({ searchParams, setSearchParams }: QueryBui
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="date" tick={{ fill: "#9ca3af" }} />
                       <YAxis tick={{ fill: "#9ca3af" }} />
-                      <Tooltip {...tooltipStyle} />
-                      <Legend />
+                      <Tooltip wrapperStyle={{ zIndex: 10 }} {...tooltipStyle} />
+                      <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: 12, maxHeight: 60, overflowY: "auto" }} />
                       {allValues.map((v, i) => (
                         <Area
                           key={v}
