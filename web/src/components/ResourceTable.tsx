@@ -212,10 +212,9 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
           )}
         </button>
         {kvFilterOpen && (
-          <div className="absolute z-20 mt-1 left-0 min-w-[22rem] bg-white dark:bg-gray-700 border dark:border-gray-600 rounded shadow-lg p-3 space-y-2">
-            <div className="text-xs text-gray-400 mb-1">Filter resources by label</div>
-            <div className="flex gap-1.5 items-center">
-              <div className="flex-1">
+          <div className="absolute z-20 mt-1 left-0 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded shadow-lg p-2">
+            <div className="flex gap-1 items-center">
+              <div className="w-44">
                 <FilterInput
                   label="label"
                   value={filterKey}
@@ -224,10 +223,8 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
                   onSearch={setLabelSearch}
                 />
               </div>
-            </div>
-            <div className="flex gap-1.5 items-center">
               <select
-                className="border rounded px-1.5 py-1.5 text-xs bg-white dark:bg-gray-700 dark:border-gray-600"
+                className="border rounded px-1 py-1.5 text-xs bg-white dark:bg-gray-700 dark:border-gray-600"
                 value={filterOp}
                 onChange={(e) => setFilterOp(e.target.value)}
               >
@@ -236,7 +233,7 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
                 ))}
               </select>
               <input
-                className="flex-1 border rounded px-2 py-1.5 text-xs font-mono bg-white dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400"
+                className="w-36 border rounded px-2 py-1.5 text-xs font-mono bg-white dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400"
                 placeholder="value"
                 value={filterValue}
                 onChange={(e) => setFilterValue(e.target.value)}
@@ -244,20 +241,20 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
                   if (e.key === "Escape" || e.key === "Enter") setKvFilterOpen(false);
                 }}
               />
+              {hasKvFilter && (
+                <button
+                  className="text-xs text-gray-400 hover:text-red-500 px-1"
+                  onClick={() => {
+                    setFilterKey("");
+                    setFilterOp("eq");
+                    setFilterValue("");
+                    setKvFilterOpen(false);
+                  }}
+                >
+                  Clear
+                </button>
+              )}
             </div>
-            {hasKvFilter && (
-              <button
-                className="text-xs text-gray-400 hover:text-red-500"
-                onClick={() => {
-                  setFilterKey("");
-                  setFilterOp("eq");
-                  setFilterValue("");
-                  setKvFilterOpen(false);
-                }}
-              >
-                Clear
-              </button>
-            )}
           </div>
         )}
       </div>
