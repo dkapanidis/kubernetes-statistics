@@ -240,19 +240,6 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
                   if (e.key === "Escape" || e.key === "Enter") setKvFilterOpen(false);
                 }}
               />
-              {hasKvFilter && (
-                <button
-                  className="text-xs text-gray-400 hover:text-red-500 px-1"
-                  onClick={() => {
-                    setFilterKey("");
-                    setFilterOp("eq");
-                    setFilterValue("");
-                    setKvFilterOpen(false);
-                  }}
-                >
-                  Clear
-                </button>
-              )}
             </div>
           </div>
         )}
@@ -272,6 +259,12 @@ export default function ResourceTable({ searchParams, setSearchParams, onSelect 
         onFiltersChange={onFiltersChange}
         initialSort={initialSort}
         onSortChange={onSortChange}
+        hasExternalFilters={hasKvFilter}
+        onClearFilters={() => {
+          setFilterKey("");
+          setFilterOp("eq");
+          setFilterValue("");
+        }}
         footer={
           <span className="flex items-center gap-1.5 ml-auto">
             Show
